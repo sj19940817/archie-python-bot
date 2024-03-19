@@ -1,6 +1,6 @@
 import logging
 from typing import Dict
-from cryptography.fernet import Fernet
+
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
 from telegram.ext import (
     Application,
@@ -10,6 +10,9 @@ from telegram.ext import (
     MessageHandler,
     filters,
 )
+
+import re
+
 
 # Enable logging
 logging.basicConfig(
@@ -25,30 +28,17 @@ CHOOSING, TYPING_REPLY, TYPING_CHOICE = range(3)
 reply_keyboard = [
     ["Chain", "TokenOutAddress"],
     ["BNB", "Private Key"],
-    ["Something else..."],
-    ["Done"],
+    ["Add commets"],
+    # ["Done"],
+    ["OK", "Cancel"],
 ]
 markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
 
-# Generate a secret key
-key = Fernet.generate_key()
-cipher_suite = Fernet(key)
-
-# Encrypt the private key
-def encrypt_private_key(private_key):
-    encrypted_private_key = cipher_suite.encrypt(private_key.encode())
-    return encrypted_private_key
-
-# Decrypt the private key
-def decrypt_private_key(encrypted_private_key):
-    decrypted_private_key = cipher_suite.decrypt(encrypted_private_key).decode()
-    return decrypted_private_key
 
 def facts_to_str(user_data: Dict[str, str]) -> str:
     """Helper function for formatting the gathered user info."""
     facts = [f"{key} - {value}" for key, value in user_data.items()]
     return "\n".join(facts).join(["\n", "\n"])
-
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Start the conversation and ask user for input."""
@@ -89,8 +79,13 @@ async def select_chain(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
 async def regular_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Ask the user for info about the selected predefined choice."""
     text = update.message.text
+    print(text)
     context.user_data["choice"] = text
-    await update.message.reply_text(f"Your {text.lower()}? Yes, I would love to hear about that!")
+
+    if text == "Private Key":
+        await update.message.reply_text("Please enter your private key")
+    else:
+        await update.message.reply_text(f"Your {text.lower()}? Yes, I would love to hear about that!")
 
     return TYPING_REPLY
 
@@ -103,50 +98,55 @@ async def custom_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     return TYPING_CHOICE
 
 
+# Function to validate the private key
+def is_valid_private_key(private_key: str) -> bool:
+    private_key = private_key.strip()
+
+    # if len(private_key) != 64:
+    #     print('Length here=-----------')
+    #     return False
+
+    if not re.match('^[0-9a-fA-F]+$', private_key):
+        print('here=-----------')
+        return False
+
+    return True
+
+# Update the received_information function to include private key validation
 async def received_information(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Store info provided by user and ask for the next category."""
     user_data = context.user_data
     text = update.message.text
     category = user_data["choice"]
 
     if category == "Private Key":
-        # Encrypt the private key before storing
-        encrypted_private_key = encrypt_private_key(text)
-        user_data[category] = encrypted_private_key
-        
-    # Perform validation check for token quantity
-    if category == "BNB":
-        if not text.isdigit():
-            await update.message.reply_text("Please enter a valid numerical value for token quantity.")
+        if not is_valid_private_key(text):
+            await update.message.reply_text("Please enter a valid private key.")
             return TYPING_REPLY
 
-    # Perform validation check for token address
-    if category == "TokenOutAddress":
-        if not isinstance(text, str):
-            await update.message.reply_text("Please enter a valid token address as a string.")
-            return TYPING_REPLY
+        # Mask the private key before displaying it
+        masked_private_key = text[:6] + "..." + text[-6:]
 
-    # Store valid user input
-    user_data[category] = text
+        user_data[category] = masked_private_key
+    else:
+        user_data[category] = text
+
     del user_data["choice"]
 
     await update.message.reply_text(
         "Neat! Just so you know, this is what you already told me:"
         f"{facts_to_str(user_data)}You can tell me more, or change your opinion"
-        " on something.",
+        " add comments",
         reply_markup=markup,
     )
 
     return CHOOSING
 
-async def done(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def OK(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Display the gathered info and end the conversation."""
     user_data = context.user_data
     if "choice" in user_data:
         del user_data["choice"]
-    print(user_data)
     if user_data == {}:
-        print(user_data)
         await update.message.reply_text(
             "Please input correctly",
             reply_markup=ReplyKeyboardRemove()
@@ -182,17 +182,17 @@ def main() -> None:
             ],
             TYPING_CHOICE: [
                 MessageHandler(
-                    filters.TEXT & ~(filters.COMMAND | filters.Regex("^Done$")), regular_choice
+                    filters.TEXT & ~(filters.COMMAND | filters.Regex("^OK$")), regular_choice
                 )
             ],
             TYPING_REPLY: [
                 MessageHandler(
-                    filters.TEXT & ~(filters.COMMAND | filters.Regex("^Done$")),
+                    filters.TEXT & ~(filters.COMMAND | filters.Regex("^OK$")),
                     received_information,
                 )
             ],
         },
-        fallbacks=[MessageHandler(filters.Regex("^Done$"), done)],
+        fallbacks=[MessageHandler(filters.Regex("^OK$"), OK)],
     )
 
     application.add_handler(conv_handler)
