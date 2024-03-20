@@ -10,9 +10,8 @@ from telegram.ext import (
     ConversationHandler,
     MessageHandler,
     filters,
+    CallbackQueryHandler,
 )
-
-
 
 # Enable logging
 logging.basicConfig(
@@ -69,16 +68,18 @@ async def select_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 async def select_chain(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Ask the user for the Chain that they want"""
     text = update.message.text
-    print(text)
-    category = user_data["chain"]
-    user_data[category] = text
+    print(context.user_data)
+    category = context.user_data["chain"]
+    context.user_data[category] = text
 
     return CHOOSING
 
 async def regular_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Display the data that the user input"""
     text = update.message.text
+    
     print("regular choice ----",text)
+
     context.user_data["choice"] = text
 
     if text == "Private Key":
@@ -87,13 +88,7 @@ async def regular_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await update.message.reply_text(f"Your {text.lower()}? Yes, I would love to hear about that!")
 
     return TYPING_REPLY
-# async def cancel_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-#     """If the user click the cancel button, then the bot will redirect the first paeg"""
 
-#     text = update.message.text
-#     print("cancel ------",text)
-#     context.user_data['choice'] = text
-#     # if text
 async def custom_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Ask the user for a description of a custom category."""
     await update.message.reply_text(
@@ -102,6 +97,17 @@ async def custom_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 
     return TYPING_CHOICE
 
+def is_valid_token_address(token_address: str)-> bool:
+#function to validate the TokenOutAddress
+    if len(token_address) != 42 or not token_address.startswith("0x"):
+        return False
+    
+    #Check if the address consists of valid hexadecimal characters
+    try:
+        int(token_address, 16)
+        return True
+    except ValueError:
+        return False
 
 # Function to validate the private key
 def is_valid_private_key(private_key: str) -> bool:
@@ -117,7 +123,7 @@ def is_valid_private_key(private_key: str) -> bool:
 
     return True
 
-# Canccel the conversation and clear user data.
+# Cancel the conversation and clear user data.
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_data = context.user_data
     user_data.clear()
@@ -138,10 +144,10 @@ async def received_information(update: Update, context: ContextTypes.DEFAULT_TYP
             await update.message.reply_text("Please enter the amount of BNB!")
             return TYPING_REPLY
         
-        if category == "TokenOutAddress":
-            if not isinstance(text, str):
-                await update.message.reply_text("Please enter valide token address as string")
-                return TYPING_REPLY
+    if category == "TokenOutAddress":
+        if not is_valid_token_address(text):
+            await update.message.reply_text("Please enter a valid token address.")
+            return TYPING_REPLY
 
     if category == "Private Key":
         if not is_valid_private_key(text):
@@ -149,7 +155,7 @@ async def received_information(update: Update, context: ContextTypes.DEFAULT_TYP
             return TYPING_REPLY
 
         # Mask the private key before displaying it
-        masked_private_key = text[:3] + "..." + text[-3:]
+        masked_private_key = text[:3] + "....."
         user_data[category] = masked_private_key
     else:
         user_data[category] = text
@@ -166,29 +172,31 @@ async def received_information(update: Update, context: ContextTypes.DEFAULT_TYP
     return CHOOSING
 
 async def OK(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Display the gathered info and end the conversation."""
+    """"Display the gathered info and end the transaction Order."""
     user_data = context.user_data
-    if "choice" in user_data:
-        del user_data["choice"]
-    if user_data == {}:
-        await update.message.reply_text(
-            "Please input correctly",
-            reply_markup=ReplyKeyboardRemove()
-        )
+
+    if not user_data:
+        await update.message.reply_text("Please provide input data before confirming.", reply_markup=ReplyKeyboardRemove())
+        return CHOOSING
+    
+    reply_confirmation = [["Confirm", "Cancel"]]
+    confirmation_markup = ReplyKeyboardMarkup(reply_confirmation, one_time_keyboard=True)
 
     await update.message.reply_text(
-        f"Your input data: {facts_to_str(user_data)} Just a minute!",
-        reply_markup=ReplyKeyboardRemove(),
+        f"Your input data: \n {facts_to_str(user_data)} \n Please confirm your transaction:",
+        reply_markup=confirmation_markup,
     )
 
+    return CHOOSING
+
+async def quit_order(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    user_data = context.user_data
     user_data.clear()
+    await update.message.reply_text(
+        "Order cancelled. You can start a new order by typing /start.",
+        reply_markup=ReplyKeyboardRemove()
+    )
     return ConversationHandler.END
-
-# async def Cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-#     """"If the user click the cancel button, the bot will redirect to the first page."""
-#     user_data = context.user_data
-#     if "choice" in user_data:
-
 
 def main() -> None:
     """Run the bot."""
@@ -226,6 +234,7 @@ def main() -> None:
         fallbacks=[
             MessageHandler(filters.Regex("^OK$"), OK),
             MessageHandler(filters.Regex("^Cancel$"), cancel),
+            CommandHandler("quit", quit_order)
             ],
     )
 
