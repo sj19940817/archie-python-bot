@@ -10,8 +10,9 @@ from telegram.ext import (
     ConversationHandler,
     MessageHandler,
     filters,
-    CallbackQueryHandler,
 )
+
+# from .config import (Token)
 
 # Enable logging
 logging.basicConfig(
@@ -20,6 +21,7 @@ logging.basicConfig(
 # set higher logging level for httpx to avoid all GET and POST requests being logged
 logging.getLogger("httpx").setLevel(logging.WARNING)
 
+# TG_Token = Token
 logger = logging.getLogger(__name__)
 
 CHOOSING, TYPING_REPLY, TYPING_CHOICE = range(3)
@@ -78,21 +80,23 @@ async def regular_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     """Display the data that the user input"""
     text = update.message.text
     
-    print("regular choice ----",text)
-
     context.user_data["choice"] = text
 
     if text == "Private Key":
-        await update.message.reply_text("Please enter your private key")
-    else:
-        await update.message.reply_text(f"Your {text.lower()}? Yes, I would love to hear about that!")
+        await update.message.reply_text(f"Please input your {text}.")
+    if text == "Chain":
+        await update.message.reply_text(f"Please select the {text} you want.")
+    if text == "BNB":
+        await update.message.reply_text(f"Please input the amount of {text}.")
+    if text == "TokenOutAddress":
+        await update.message.reply_text(f"Please intput the {text}")
 
     return TYPING_REPLY
 
 async def custom_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Ask the user for a description of a custom category."""
     await update.message.reply_text(
-        'Alright, please send me the category first, for example "MEMO" or "I have sell some tokens because of the price change."'
+        'Alright, please send me the category first, for example "MEMO" : "I have sold some tokens because of the price change."'
     )
 
     return TYPING_CHOICE
@@ -183,11 +187,17 @@ async def OK(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     confirmation_markup = ReplyKeyboardMarkup(reply_confirmation, one_time_keyboard=True)
 
     await update.message.reply_text(
-        f"Your input data: \n {facts_to_str(user_data)} \n Please confirm your transaction:",
+        f"Your input data: \n {facts_to_str(user_data)} \n Are you really make a transaction?",
         reply_markup=confirmation_markup,
     )
 
     return CHOOSING
+
+async def confirm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
+    """confirm user's transaction"""
+    await update.message.reply_text(
+        f"Requesting now. Please wait a moment"
+    )
 
 async def quit_order(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_data = context.user_data
@@ -217,7 +227,8 @@ def main() -> None:
                     filters.Regex("^(TokenOutAddress|BNB|Private Key)$"), regular_choice
                 ),
                 MessageHandler(filters.Regex("^Add comments$"), custom_choice),
-                MessageHandler(filters.Regex("^Cancel$"), cancel)
+                MessageHandler(filters.Regex("^Cancel$"), cancel),
+                MessageHandler(filters.Regex("^Confirm$"), confirm)
             ],
             TYPING_CHOICE: [
                 MessageHandler(
