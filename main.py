@@ -21,7 +21,7 @@ logging.basicConfig(
 # set higher logging level for httpx to avoid all GET and POST requests being logged
 logging.getLogger("httpx").setLevel(logging.WARNING)
 
-# TG_Token = Token
+#TG_Token = Token
 logger = logging.getLogger(__name__)
 
 CHOOSING, TYPING_REPLY, TYPING_CHOICE = range(3)
@@ -32,6 +32,7 @@ reply_keyboard = [
     ["Add comments"],
     ["OK", "Cancel"],
 ]
+
 markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
 
 
@@ -113,19 +114,18 @@ def is_valid_token_address(token_address: str)-> bool:
     except ValueError:
         return False
 
-# Function to validate the private key
+#Function to validate the private key
 def is_valid_private_key(private_key: str) -> bool:
     private_key = private_key.strip()
-
-    # if len(private_key) != 64:
-    #     print('Length here=-----------')
-    #     return False
 
     if not re.match('^[0-9a-fA-F]+$', private_key):
         print('here=-----------')
         return False
 
     return True
+
+# def is_valid_private_key(private_key):
+#     return bool(re.match(r"^[A-Fa-f0-9]{64}$", private_key))
 
 # Cancel the conversation and clear user data.
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -175,24 +175,6 @@ async def received_information(update: Update, context: ContextTypes.DEFAULT_TYP
 
     return CHOOSING
 
-# async def OK(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-#     """"Display the gathered info and end the transaction Order."""
-#     user_data = context.user_data
-#     print(user_data)
-#     if not user_data:
-#         await update.message.reply_text("Please provide input data before confirming.", reply_markup=ReplyKeyboardRemove())
-#         return CHOOSING
-    
-#     reply_confirmation = [["Confirm", "Cancel"]]
-#     confirmation_markup = ReplyKeyboardMarkup(reply_confirmation, one_time_keyboard=True)
-
-#     await update.message.reply_text(
-#         f"Your input data: \n {facts_to_str(user_data)} \n Are you really make a transaction?",
-#         reply_markup=confirmation_markup,
-#     )
-
-#     return CHOOSING
-
 async def confirm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
     """confirm user's transaction"""
     await update.message.reply_text(
@@ -203,8 +185,8 @@ async def OK(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
      user_data = context.user_data
 
      # check if all required inputs have been provided
-     if "Chain" in user_data and "TokenOutAddress" in user_data and "BNB" in user_data and "private Key" in user_data:
-         reply_confirmation = [["Confirma", "Cancel"]]
+     if "Chain" in user_data and "TokenOutAddress" in user_data and "BNB" in user_data and "Private Key" in user_data:
+         reply_confirmation = [["Confirm", "Cancel"]]
          confirmation_markup = ReplyKeyboardMarkup(reply_confirmation, one_time_keyboard=True)
 
          await update.message.reply_text(
@@ -213,7 +195,7 @@ async def OK(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
          )
          return CHOOSING
      else: 
-         await update.message.reply_text("Please provide all required input data before confirming.. ", reply_markup = markup)
+         await update.message.reply_text(f"Please provide all required input data before confirming.. \n Your input data: {facts_to_str(user_data)} ", reply_markup = markup)
          return CHOOSING
 
 async def quit_order(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
