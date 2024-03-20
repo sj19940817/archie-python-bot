@@ -175,29 +175,46 @@ async def received_information(update: Update, context: ContextTypes.DEFAULT_TYP
 
     return CHOOSING
 
-async def OK(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """"Display the gathered info and end the transaction Order."""
-    user_data = context.user_data
-
-    if not user_data:
-        await update.message.reply_text("Please provide input data before confirming.", reply_markup=ReplyKeyboardRemove())
-        return CHOOSING
+# async def OK(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+#     """"Display the gathered info and end the transaction Order."""
+#     user_data = context.user_data
+#     print(user_data)
+#     if not user_data:
+#         await update.message.reply_text("Please provide input data before confirming.", reply_markup=ReplyKeyboardRemove())
+#         return CHOOSING
     
-    reply_confirmation = [["Confirm", "Cancel"]]
-    confirmation_markup = ReplyKeyboardMarkup(reply_confirmation, one_time_keyboard=True)
+#     reply_confirmation = [["Confirm", "Cancel"]]
+#     confirmation_markup = ReplyKeyboardMarkup(reply_confirmation, one_time_keyboard=True)
 
-    await update.message.reply_text(
-        f"Your input data: \n {facts_to_str(user_data)} \n Are you really make a transaction?",
-        reply_markup=confirmation_markup,
-    )
+#     await update.message.reply_text(
+#         f"Your input data: \n {facts_to_str(user_data)} \n Are you really make a transaction?",
+#         reply_markup=confirmation_markup,
+#     )
 
-    return CHOOSING
+#     return CHOOSING
 
 async def confirm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
     """confirm user's transaction"""
     await update.message.reply_text(
         f"Requesting now. Please wait a moment"
     )
+
+async def OK(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int: 
+     user_data = context.user_data
+
+     # check if all required inputs have been provided
+     if "Chain" in user_data and "TokenOutAddress" in user_data and "BNB" in user_data and "private Key" in user_data:
+         reply_confirmation = [["Confirma", "Cancel"]]
+         confirmation_markup = ReplyKeyboardMarkup(reply_confirmation, one_time_keyboard=True)
+
+         await update.message.reply_text(
+             f"Your input data: \n{facts_to_str(user_data)} \n Please confirm your transaction:",
+             reply_markup = confirmation_markup
+         )
+         return CHOOSING
+     else: 
+         await update.message.reply_text("Please provide all required input data before confirming.. ", reply_markup = markup)
+         return CHOOSING
 
 async def quit_order(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_data = context.user_data
