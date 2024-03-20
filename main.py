@@ -208,16 +208,13 @@ def main() -> None:
                 MessageHandler(
                     filters.Regex("^(TokenOutAddress|BNB|Private Key)$"), regular_choice
                 ),
-                MessageHandler(filters.Regex("^Something else...$"), custom_choice),
+                MessageHandler(filters.Regex("^Add comments$"), custom_choice),
                 MessageHandler(filters.Regex("^Cancel$"), cancel)
             ],
             TYPING_CHOICE: [
                 MessageHandler(
                     filters.TEXT & ~(filters.COMMAND | filters.Regex("^OK$")), regular_choice
                 ),
-                # MessageHandler(
-                #     filters.TEXT & ~(filters.COMMAND | filters.Regex("^Cancel$")), cancel_choice
-                # )
             ],
             TYPING_REPLY: [
                 MessageHandler(
