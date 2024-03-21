@@ -24,13 +24,25 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
+disabled_buttons = set()
+
 CHOOSING, TYPING_REPLY, TYPING_CHOICE = range(3)
 
+# reply_keyboard = [
+#     ["Chain", "TokenOutAddress"],
+#     ["BNB", "Private Key"],
+#     ["Add comments"],
+#     ["OK", "Cancel"],
+# ]
+
 reply_keyboard = [
-    ["Chain", "TokenOutAddress"],
-    ["BNB", "Private Key"],
-    ["Add comments"],
-    ["OK", "Cancel"],
+    [{"text": "Chain", "request_contact": False},
+     {"text": "TokenOutAddress", "request_contact": False}],
+    [{"text": "BNB", "request_contact": False }, 
+     {"text": "Private Key", "request": True}],  # Disable Private Key initially
+    [{"text": "Add comments", "request_contact": False}],
+    [{"text": "OK", "request_contact": False},
+     {"text": "Cancel", "request": False}],
 ]
 
 markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
@@ -77,6 +89,10 @@ async def select_chain(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
 
     return CHOOSING
 
+async def update_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    new_markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+    await update.message.reply_text("Buttons updated.", reply_markup=new_markup)
+
 async def regular_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Display the data that the user input"""
     text = update.message.text
@@ -84,6 +100,7 @@ async def regular_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     context.user_data["choice"] = text
 
     if text == "Private Key":
+        disabled_buttons.add(text) # Add "Private Key" to disabled buttons set
         await update.message.reply_text(f"Please input your {text}.")
     if text == "Chain":
         await update.message.reply_text(f"Please select the {text} you want.")
@@ -189,11 +206,8 @@ async def OK(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
          await update.message.reply_text(f"Please provide all required input data before confirming.. \n Your input data: {facts_to_str(user_data)} ", reply_markup = markup)
          return CHOOSING
 
-# # Function to send a new message with the updated ReplyKeyboardMarkup after a button is clicked
-# async def update_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-#     new_markup = 
-
 async def quit_order(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Redirect the user when he or she input the command /quit..."""
     user_data = context.user_data
     user_data.clear()
     await update.message.reply_text(
@@ -247,7 +261,7 @@ def main() -> None:
 
     application.add_handler(conv_handler)
 
-    """Run the bot until the user presses Ctrl-C"""
+    """Run the bot until the user press Ctrl-C"""
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
