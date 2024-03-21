@@ -10,6 +10,7 @@ from telegram.ext import (
     ConversationHandler,
     MessageHandler,
     filters,
+    CallbackContext
 )
 
 # from .config import (Token)
@@ -42,9 +43,16 @@ markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
 
 def facts_to_str(user_data: Dict[str, str]) -> str:
     """Helper function for formatting the gathered user info."""
-    facts = [f"{key} - {value}" for key, value in user_data.items()]
+    facts = [
+        f"{emoji.emojize(':link: Chain')} : {value}" if key == 'Chain' else
+        f"{emoji.emojize(':money_with_wings: BNB')} : {value}" if key == "BNB" else
+        f"{emoji.emojize(':receipt: TokenOutAddress')}: {value}" if key == "TokenOutAddress" else
+        f"{emoji.emojize(':key: Private Key')} : {value}" if key == 'Private Key' else
+        f"Comments: {value}" if key == "Add comments" else
+        f"{key} : {value}"
+        for key, value in user_data.items() 
+    ]
     return "\n".join(facts).join(["\n", "\n"])
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Start the conversation and ask user for the data."""
     await update.message.reply_text(
@@ -89,7 +97,7 @@ async def update_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 async def regular_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Display the data that the user input"""
     text = update.message.text
-    
+    print("regular choice",text)
     context.user_data["choice"] = text
 
     if text == "Private Key":
@@ -107,10 +115,9 @@ async def regular_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 async def custom_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Ask the user for a description of a custom category."""
     await update.message.reply_text(
-        'Alright, please send me the category first, for example "MEMO" : "I have sold some tokens because of the price change."'
+        'Do you want to add comments to this transaction? \nThen please input the comments!!! '
     )
-
-    return TYPING_CHOICE
+    return TYPING_REPLY
 
 def is_valid_token_address(token_address: str)-> bool:
     """function to validate the TokenOutAddress"""
@@ -141,8 +148,12 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 async def received_information(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Update the received_information function to include private key validation"""
     user_data = context.user_data
+    print("received information", user_data)
     text = update.message.text
-    category = user_data["choice"]
+    category = user_data.get("choice") # Use get method to avoid KeyError
+
+    if category == None:
+        category = "Comments"
 
     if category == "BNB":
         if not text.isdigit():
@@ -162,10 +173,17 @@ async def received_information(update: Update, context: ContextTypes.DEFAULT_TYP
         """Mask the private key before displaying it"""
         masked_private_key = text[:3] + "....."
         user_data[category] = masked_private_key
+
+        """Delete the private key message"""
+        chat_id = update.message.chat_id
+        message_id = update.message.message_id
+        await context.bot.delete_message(chat_id = chat_id, message_id = message_id)
+        
     else:
         user_data[category] = text
 
-    del user_data["choice"]
+    if "choice" in user_data:
+        del user_data["choice"]
 
     await update.message.reply_text(
         "Neat! Just so you know, this is what you already told me:"
@@ -209,6 +227,13 @@ async def quit_order(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     )
     return ConversationHandler.END
 
+async def delete_message(update: Update, context: CallbackContext) -> None:
+    #Get the chat ID and message ID
+    chat_id = update.message.chat_id
+    message_id = update.message.message_id
+
+    #Delete the message
+    context.bot.delet_message(chat_id = chat_id, message_id = message_id)
 def main() -> None:
     """Run the bot."""
 
@@ -248,7 +273,8 @@ def main() -> None:
         fallbacks=[
             MessageHandler(filters.Regex("^OK$"), OK),
             MessageHandler(filters.Regex("^Cancel$"), cancel),
-            CommandHandler("quit", quit_order)
+            CommandHandler("quit", quit_order),
+            # MessageHandler(Filters.text & Filters.command, delete_message)
             ],
     )
 
