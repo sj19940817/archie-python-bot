@@ -1,7 +1,7 @@
 import logging
 from typing import Dict
 import re
-
+import emoji
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
 from telegram.ext import (
     Application,
@@ -27,13 +27,6 @@ logger = logging.getLogger(__name__)
 disabled_buttons = set()
 
 CHOOSING, TYPING_REPLY, TYPING_CHOICE = range(3)
-
-# reply_keyboard = [
-#     ["Chain", "TokenOutAddress"],
-#     ["BNB", "Private Key"],
-#     ["Add comments"],
-#     ["OK", "Cancel"],
-# ]
 
 reply_keyboard = [
     [{"text": "Chain", "request_contact": False},
@@ -74,7 +67,7 @@ async def select_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     chain_type = ReplyKeyboardMarkup(reply_chains, one_time_keyboard=True)
 
     await update.message.reply_text(
-        "Please choose the chain you want",
+        f"Please choose the {emoji.emojize(':link:')} chain you want",
         reply_markup=chain_type
     )
 
@@ -101,13 +94,13 @@ async def regular_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     if text == "Private Key":
         disabled_buttons.add(text) # Add "Private Key" to disabled buttons set
-        await update.message.reply_text(f"Please input your {text}.")
+        await update.message.reply_text(f"Please input your {text} {emoji.emojize(':key:')}.")
     if text == "Chain":
-        await update.message.reply_text(f"Please select the {text} you want.")
+        await update.message.reply_text(f"Please select the  {text} {emoji.emojize(':link:')} you want.")
     if text == "BNB":
-        await update.message.reply_text(f"Please input the amount of {text}.")
+        await update.message.reply_text(f"Please input the amount of  {text} {emoji.emojize(':money_bag:')} .")
     if text == "TokenOutAddress":
-        await update.message.reply_text(f"Please intput the {text}")
+        await update.message.reply_text(f"Please intput the {text} {emoji.emojize(':envelope:')}")
 
     return TYPING_REPLY
 
