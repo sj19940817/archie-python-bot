@@ -45,22 +45,28 @@ def facts_to_str(user_data: Dict[str, str]) -> str:
     """Helper function for formatting the gathered user info."""
     facts = [
         f"{emoji.emojize(':link: Chain')} : {value}" if key == 'Chain' else
-        f"{emoji.emojize(':money_with_wings: BNB')} : {value}" if key == "BNB" else
+        f"{emoji.emojize(':money_bag: BNB')} : {value}" if key == "BNB" else
         f"{emoji.emojize(':receipt: TokenOutAddress')}: {value}" if key == "TokenOutAddress" else
         f"{emoji.emojize(':key: Private Key')} : {value}" if key == 'Private Key' else
-        f"Comments: {value}" if key == "Add comments" else
+        # f"Comments: {value}" if key == "Add comments" else
         f"{key} : {value}"
         for key, value in user_data.items() 
     ]
     return "\n".join(facts).join(["\n", "\n"])
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Start the conversation and ask user for the data."""
     await update.message.reply_text(
-        "Hello! I am ArchieBot. Please input the data for buying or selling of tokens.",
+        "Hello! I am  ** ArchieBot **. Please input the data for buying or selling of tokens.",
         reply_markup=markup,
     )
 
     return CHOOSING
+async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Help command"""
+    await update.message.reply_text(
+        "1. To start the transaction, please input command /start \n2. To cancel the transcation, please input the command /quit"
+    )
 
 async def select_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Ask the user for the Chain that they want"""
@@ -84,7 +90,6 @@ async def select_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 async def select_chain(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Ask the user for the Chain that they want"""
     text = update.message.text
-    print(context.user_data)
     category = context.user_data["chain"]
     context.user_data[category] = text
 
@@ -97,7 +102,7 @@ async def update_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 async def regular_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Display the data that the user input"""
     text = update.message.text
-    print("regular choice",text)
+    
     context.user_data["choice"] = text
 
     if text == "Private Key":
@@ -148,11 +153,10 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 async def received_information(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Update the received_information function to include private key validation"""
     user_data = context.user_data
-    print("received information", user_data)
     text = update.message.text
     category = user_data.get("choice") # Use get method to avoid KeyError
-
     if category == None:
+        # category = emoji.emojize(':speech_bolloon: Comments')
         category = "Comments"
 
     if category == "BNB":
@@ -242,7 +246,7 @@ def main() -> None:
 
     """Add conversation handler with the states CHOOSING, TYPING_CHOICE and TYPING_REPLY"""
     conv_handler = ConversationHandler(
-        entry_points=[CommandHandler("start", start)],
+        entry_points=[CommandHandler("start", start), CommandHandler("help", help)],
         states={
             CHOOSING: [
                 MessageHandler(
@@ -274,7 +278,6 @@ def main() -> None:
             MessageHandler(filters.Regex("^OK$"), OK),
             MessageHandler(filters.Regex("^Cancel$"), cancel),
             CommandHandler("quit", quit_order),
-            # MessageHandler(Filters.text & Filters.command, delete_message)
             ],
     )
 
