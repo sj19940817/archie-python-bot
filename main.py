@@ -79,6 +79,7 @@ async def select_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     text = update.message.text
     context.user_data["choice"] = text
 
+    # Definition of  the chains
     reply_chains = [
         ["BSC"],
         ["Avax"],
@@ -155,15 +156,15 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         reply_markup=ReplyKeyboardRemove(),        
     )
     return ConversationHandler.END
+        # f"{emoji.emojize(':link: Chain')} : {value}" if key == 'Chain' else
 
 async def received_information(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Update the received_information function to include private key validation"""
+    """Update the received_information function to include private key validation"""    
     user_data = context.user_data
     text = update.message.text
     category = user_data.get("choice") # Use get method to avoid KeyError
     if category == None:
-        # category = emoji.emojize(':speech_bolloon: Comments')
-        category = "Comments"
+        category = f"{emoji.emojize(':pencil: Comments')}"
 
     if category == "Chain":
         print('here are chains')
