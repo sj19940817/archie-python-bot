@@ -292,6 +292,7 @@ def main() -> None:
             MessageHandler(filters.Regex("^OK$"), OK),
             MessageHandler(filters.Regex("^Cancel$"), cancel),
             CommandHandler("quit", quit_order),
+            CommandHandler("help", help)
             ],
     )
 
