@@ -13,7 +13,7 @@ from telegram.ext import (
     CallbackContext
 )
 
-# from .config import (Token)
+from config import Token
 
 """Enable logging"""
 logging.basicConfig(
@@ -256,7 +256,7 @@ def main() -> None:
     """Run the bot."""
 
     """Create the Application and pass it your bot's token."""
-    application = Application.builder().token("7071537775:AAFD479QCXCFL6DB8A3cQkFALRznXsAUG44").build()
+    application = Application.builder().token(Token).build()
 
     """Add conversation handler with the states CHOOSING, TYPING_CHOICE and TYPING_REPLY"""
     conv_handler = ConversationHandler(
