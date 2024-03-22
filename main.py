@@ -41,6 +41,12 @@ reply_keyboard = [
 
 markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
 
+reply_chains = [
+    "BSC",
+    "Avax",
+    "Solana"
+]
+
 def facts_to_str(user_data: Dict[str, str]) -> str:
     """Helper function for formatting the gathered user info."""
     facts = [
@@ -158,6 +164,13 @@ async def received_information(update: Update, context: ContextTypes.DEFAULT_TYP
     if category == None:
         # category = emoji.emojize(':speech_bolloon: Comments')
         category = "Comments"
+
+    if category == "Chain":
+        print('here are chains')
+        if not text in reply_chains:
+            print("validation failed")
+            await update.message.reply_text("Please input validate *Chain*!")
+            return TYPING_REPLY
 
     if category == "BNB":
         if not text.isdigit():
