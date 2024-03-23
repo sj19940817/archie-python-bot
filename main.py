@@ -271,14 +271,14 @@ async def exit_no(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
 
     user_data = context.user_data
 
-    print("exit_no", user_data )
+    print("exit_no", update )
     user_data.clear()
     await update.message.reply_text(
-        "Transaction canceled. You can start a new transaction by typing /start.",
-        reply_markup=ReplyKeyboardRemove()
+        "Welcome back",
+        reply_markup=markup
     )
     
-    return ConversationHandler.END
+    return CHOOSING
 
 async def quit_order(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Redirect the user when he or she input the command /quit..."""
