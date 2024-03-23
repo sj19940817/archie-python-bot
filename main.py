@@ -145,6 +145,7 @@ def is_valid_token_address(token_address: str)-> bool:
 
 def is_valid_private_key(private_key):
     """Function to validate the private key"""
+    print(private_key)
     return bool(re.match(r"^[A-Fa-f0-9]{64}$", private_key))
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -156,7 +157,6 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         reply_markup=ReplyKeyboardRemove(),        
     )
     return ConversationHandler.END
-        # f"{emoji.emojize(':link: Chain')} : {value}" if key == 'Chain' else
 
 async def received_information(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Update the received_information function to include private key validation"""    
@@ -170,20 +170,24 @@ async def received_information(update: Update, context: ContextTypes.DEFAULT_TYP
         print('here are chains')
         if not text in reply_chains:
             print("validation failed")
+            print("here are the category",category)
             await update.message.reply_text("Please input validate *Chain*!")
             return TYPING_REPLY
-
+            
     if category == "BNB":
+        print("Here are BNB", category)
         if not text.isdigit():
             await update.message.reply_text("Please enter the amount of BNB!")
             return TYPING_REPLY
         
     if category == "TokenOutAddress":
+        print("TokenOutAddress", category)
         if not is_valid_token_address(text):
             await update.message.reply_text("Please enter a valid token address.")
             return TYPING_REPLY
 
     if category == "Private Key":
+        print("private key", category)
         if not is_valid_private_key(text):
             await update.message.reply_text("Please enter a valid private key.")
             return TYPING_REPLY
@@ -217,7 +221,7 @@ async def confirm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
     print("context user data",context.user_data)
 
     await update.message.reply_text(
-        f"Requesting now. Please wait a moment"
+        f"Requesting now. Just a moment"
     )
 
     # call the function that request web3 with {context.user_data}
@@ -250,7 +254,7 @@ async def exit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
     exit_markup = ReplyKeyboardMarkup(exit_confirmation, one_time_keyboard=True)
 
     await update.message.reply_text(
-        f"Do you really cancel the transaction?",
+        f"Do you really want to cancel the transaction?",
         reply_markup=exit_markup
     )
     return CHOOSING
@@ -261,7 +265,7 @@ async def exit_yes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
     user_data = context.user_data
     user_data.clear()
     await update.message.reply_text(
-        "Transaction cancelled. You can start a transaction by typing /start.",
+        "Transaction cancelled. You can start a new transaction by typing /start.",
         reply_markup=ReplyKeyboardRemove()
     )
     return ConversationHandler.END
@@ -285,7 +289,7 @@ async def quit_order(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_data = context.user_data
     user_data.clear()
     await update.message.reply_text(
-        "Order cancelled. You can start a new order by typing /start.",
+        "Transaction cancelled. You can start a new transaction by typing /start.",
         reply_markup=ReplyKeyboardRemove()
     )
     return ConversationHandler.END
