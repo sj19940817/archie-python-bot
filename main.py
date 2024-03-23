@@ -36,7 +36,7 @@ reply_keyboard = [
      {"text": "Private Key", "request": True}],  # Disable Private Key initially
     [{"text": "Add comments", "request_contact": False}],
     [{"text": "OK", "request_contact": False},
-     {"text": "Cancel", "request": False}],
+     {"text": "Exit", "request": False}],
 ]
 
 markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
@@ -242,6 +242,36 @@ async def OK(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
          await update.message.reply_text(f"Please provide all required input data before confirming.. \n Your input data: {facts_to_str(user_data)} ", reply_markup = markup)
          return CHOOSING
 
+async def exit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
+    """Confirm the transaction exit function"""
+    print("exit function")
+    user_data = context.user_data
+    exit_confirmation = [["Yes", "No"]]
+    exit_markup = ReplyKeyboardMarkup(exit_confirmation, one_time_keyboard=True)
+
+    await update.message.reply_text(
+        f"Do you really cancel the transaction?",
+        reply_markup=exit_markup
+    )
+    return CHOOSING
+    
+async def exit_yes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
+    """Exit the transaction"""
+
+    print("exit_yes")
+    user_data = context.user_data
+    user_data.clear()
+    await update.message.reply_text(
+        "Transaction cancelled. You can start a transaction by typing /start.",
+        reply_markup=ReplyKeyboardRemove()
+    )
+    return ConversationHandler.END
+
+async def exit_no(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
+    """Return to the transaction"""
+
+    print("exit_no")
+
 async def quit_order(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Redirect the user when he or she input the command /quit..."""
     user_data = context.user_data
@@ -281,8 +311,10 @@ def main() -> None:
                     filters.Regex("^(TokenOutAddress|BNB|Private Key)$"), regular_choice
                 ),
                 MessageHandler(filters.Regex("^Add comments$"), custom_choice),
-                MessageHandler(filters.Regex("^Cancel$"), cancel),
-                MessageHandler(filters.Regex("^Confirm$"), confirm)
+                MessageHandler(filters.Regex("^Exit$"), exit),
+                MessageHandler(filters.Regex("^Confirm$"), confirm),
+                MessageHandler(filters.Regex("^Yes$"), exit_yes),
+                MessageHandler(filters.Regex("^No"), exit_no)
             ],
             TYPING_CHOICE: [
                 MessageHandler(
