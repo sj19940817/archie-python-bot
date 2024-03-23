@@ -258,7 +258,6 @@ async def exit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
 async def exit_yes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
     """Exit the transaction"""
 
-    print("exit_yes")
     user_data = context.user_data
     user_data.clear()
     await update.message.reply_text(
@@ -270,7 +269,16 @@ async def exit_yes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
 async def exit_no(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
     """Return to the transaction"""
 
-    print("exit_no")
+    user_data = context.user_data
+
+    print("exit_no", user_data )
+    user_data.clear()
+    await update.message.reply_text(
+        "Transaction canceled. You can start a new transaction by typing /start.",
+        reply_markup=ReplyKeyboardRemove()
+    )
+    
+    return ConversationHandler.END
 
 async def quit_order(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Redirect the user when he or she input the command /quit..."""
