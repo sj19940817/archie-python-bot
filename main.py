@@ -214,9 +214,16 @@ async def received_information(update: Update, context: ContextTypes.DEFAULT_TYP
 
 async def confirm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
     """confirm user's transaction"""
+    print("context user data",context.user_data)
+
     await update.message.reply_text(
         f"Requesting now. Please wait a moment"
     )
+
+    # call the function that request web3 with {context.user_data}
+
+# async def result_show(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+#     """This will show the transaction result from the web3"""
 
 async def OK(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int: 
      user_data = context.user_data
@@ -252,6 +259,7 @@ async def delete_message(update: Update, context: CallbackContext) -> None:
 
     #Delete the message
     context.bot.delet_message(chat_id = chat_id, message_id = message_id)
+
 def main() -> None:
     """Run the bot."""
 
@@ -300,7 +308,6 @@ def main() -> None:
 
     """Run the bot until the user press Ctrl-C"""
     application.run_polling(allowed_updates=Update.ALL_TYPES)
-
 
 if __name__ == "__main__":
     main()
