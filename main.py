@@ -33,8 +33,7 @@ reply_keyboard = [
     [{"text": "Chain", "request_contact": False},
      {"text": "TokenOutAddress", "request_contact": False}],
     [{"text": "BNB", "request_contact": False }, 
-     {"text": "Private Key", "request": True}],  # Disable Private Key initially
-    [{"text": "Add comments", "request_contact": False}],
+     {"text": "Add comments", "request": True}],  # Disable Private Key initially
     [{"text": "OK", "request_contact": False},
      {"text": "Exit", "request": False}],
 ]
@@ -186,6 +185,9 @@ async def received_information(update: Update, context: ContextTypes.DEFAULT_TYP
             await update.message.reply_text("Please enter a valid token address.")
             return TYPING_REPLY
 
+        # If the input is valid, add it to user_data
+        user_data[category] = text
+
     if category == "Private Key":
         print("private key", category)
         if not is_valid_private_key(text):
@@ -220,31 +222,65 @@ async def confirm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
     """confirm user's transaction"""
     print("context user data",context.user_data)
 
-    await update.message.reply_text(
-        f"Requesting now. Just a moment"
-    )
+    await update.message.reply_text("Please input your wallet private key!")
+    return TYPING_CHOICE
+async def private_key_input(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Ask the user to input the private key."""
+    user_data = context.user_data
+    private_key = update.message.text
+    selected_chain = user_data.get("Chain")
 
+    if selected_chain != "Solana":
+        if not is_valid_private_key(private_key):
+            if "private_key_attempts" not in user_data:
+                user_data["private_key_attempts"] = 1
+            else:
+                user_data["private_key_attempts"] += 1
+
+            if user_data["private_key_attempts"] >= 3:
+                # Limiting the number of attempts to 3
+                await update.message.reply_text("You've exceeded the maximum number of attempts. Please try again later.")
+                return ConversationHandler.END  # End the conversation
+            else:
+                await update.message.reply_text("Please input a valid private key.")
+                return TYPING_CHOICE
+
+        # If the private key is valid, delete the message
+        user_data["Private Key"] = private_key
+        chat_id = update.message.chat_id
+        message_id = update.message.message_id
+        await context.bot.delete_message(chat_id=chat_id, message_id=message_id)
+    print("final user data", user_data)
+    # Provide feedback that the private key has been received
+    await update.message.reply_text("Private key received. Proceeding with the transaction.")
+
+    # Continue with the transaction process or other actions
+
+    return CHOOSING  # Move to the next step in the conversation
+
+    
     # call the function that request web3 with {context.user_data}
 
 # async def result_show(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 #     """This will show the transaction result from the web3"""
 
 async def OK(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int: 
-     user_data = context.user_data
+    user_data = context.user_data
 
-     if "Chain" in user_data and "TokenOutAddress" in user_data and "BNB" in user_data and "Private Key" in user_data:
-         """check if all required inputs have been provided"""
-         reply_confirmation = [["Confirm", "Cancel"]]
-         confirmation_markup = ReplyKeyboardMarkup(reply_confirmation, one_time_keyboard=True)
+    if "Chain" in user_data and "TokenOutAddress" in user_data and "BNB" in user_data:
+        """check if all required inputs have been provided"""
+        reply_confirmation = [["Confirm", "Cancel"]]
+        confirmation_markup = ReplyKeyboardMarkup(reply_confirmation, one_time_keyboard=True)
 
-         await update.message.reply_text(
-             f"Your input data: \n{facts_to_str(user_data)} \n Please confirm your transaction:",
-             reply_markup = confirmation_markup
-         )
-         return CHOOSING
-     else: 
-         await update.message.reply_text(f"Please provide all required input data before confirming.. \n Your input data: {facts_to_str(user_data)} ", reply_markup = markup)
-         return CHOOSING
+        await update.message.reply_text(
+            f"Your input data: \n{facts_to_str(user_data)} \n Please confirm your transaction:",
+            reply_markup = confirmation_markup
+        )
+        return CHOOSING
+    else: 
+        await update.message.reply_text(f"Please provide all required input data before confirming.. \n Your input data: {facts_to_str(user_data)} ", reply_markup = markup)
+        return CHOOSING
+
 
 async def exit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
     """Confirm the transaction exit function"""
@@ -330,7 +366,7 @@ def main() -> None:
             ],
             TYPING_CHOICE: [
                 MessageHandler(
-                    filters.TEXT & ~(filters.COMMAND | filters.Regex("^OK$")), regular_choice
+                    filters.TEXT & ~(filters.COMMAND | filters.Regex("^OK$")), private_key_input
                 ),
             ],
             TYPING_REPLY: [
