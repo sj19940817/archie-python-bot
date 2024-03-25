@@ -143,9 +143,9 @@ async def select_chain(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
 
     return CHOOSING
 
-async def update_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    new_markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
-    await update.message.reply_text("Buttons updated.", reply_markup=new_markup)
+# async def update_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+#     new_markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+#     await update.message.reply_text("Buttons updated.", reply_markup=new_markup)
 
 async def regular_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Display the data that the user input"""
@@ -206,7 +206,7 @@ async def received_information(update: Update, context: ContextTypes.DEFAULT_TYP
     user_data = context.user_data
     text = update.message.text
     category = user_data.get("choice")  # Use get method to avoid KeyError
-
+    print('here confirm exit no---------')
     if category is None:
         category = f"{emoji.emojize(':pencil: Comments')}"
 
@@ -370,14 +370,14 @@ async def confirm_exit_no(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     user_data = context.user_data
 
-    print("confirm_exit_no", update )
-    user_data.clear()
+    print("confirm_exit_no", user_data )
+
     await update.message.reply_text(
-        "Welcome back",
-        reply_markup=markup
+        "Neat! Just so you know, this is what you already told me:"
+        f"{facts_to_str(user_data)}You can tell me more, or change your opinion"
+        " add comments",
+        reply_markup=buy_markup
     )
-    
-    return CHOOSING
 
 async def quit_order(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Redirect the user when he or she input the command /quit..."""
