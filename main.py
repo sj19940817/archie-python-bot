@@ -56,6 +56,11 @@ reply_chains = [
     "Solana"
 ]
 
+async def buy_tokens(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    # implement logic to buy tokens on PancakeSwap
+    print("Buy tokens using pancakeswap------------------", update, context)
+    pass
+
 def facts_to_str(user_data: Dict[str, str]) -> str:
     """Helper function for formatting the gathered user info."""
     facts = [
@@ -233,6 +238,7 @@ async def received_information(update: Update, context: ContextTypes.DEFAULT_TYP
     if category == "Private Key":
         print("private key", category)
         if not is_valid_private_key(text):
+    
             await update.message.reply_text("Please enter a valid private key.")
             return TYPING_REPLY
 
@@ -303,10 +309,10 @@ async def private_key_input(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         chat_id = update.message.chat_id
         message_id = update.message.message_id
         await context.bot.delete_message(chat_id=chat_id, message_id=message_id)
-    print("final user data", user_data)
+        
     # Provide feedback that the private key has been received
     await update.message.reply_text("Private key received. Proceeding with the transaction.")
-
+    await buy_tokens(update, context)
     # Continue with the transaction process or other actions
 
     return CHOOSING  # Move to the next step in the conversation
@@ -391,18 +397,6 @@ async def delete_message(update: Update, context: CallbackContext) -> None:
     #Delete the message
     context.bot.delet_message(chat_id = chat_id, message_id = message_id)
 
-# def buy(update: Update, context: CallbackContext) -> None:
-#     # Implement buying logic here
-#     update.message.reply_text('Buying tokens...')
-
-# def sell(update: Update, context: CallbackContext) -> None:
-#     # Implement selling logic here
-#     update.message.reply_text('Selling tokens...')
-
-# def swap(update: Update, context: CallbackContext) -> None:
-#     # Implement swapping logic here
-#     update.message.reply_text('Swapping tokens...')
-    
 def main() -> None:
     """Run the bot."""
 
