@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 disabled_buttons = set()
 
-CHOOSING, TYPING_REPLY, TYPING_CHOICE, TYPING_PRIVATE_KEY = range(4)
+CHOOSING, TYPING_REPLY, TYPING_CHOICE, TYPING_PRIVATE_KEY, SELL_CHOOSING, SELL_TYPING_REPLY = range(6)
 
 buy_reply_keyboard = [
     [{"text": "Chain", "request_contact": False},
@@ -107,7 +107,7 @@ async def sell(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         reply_markup=sell_markup,
     )
     
-    return CHOOSING 
+    return SELL_CHOOSING 
 
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Help command"""
@@ -115,7 +115,7 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         "1. To start the transaction, please input command /start \n2. To cancel the transcation, please input the command /quit"
     )
 
-async def select_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def buy_select_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Ask the user for the Chain that they want"""
     print(context)
     text = update.message.text
@@ -136,6 +136,27 @@ async def select_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 
     return TYPING_REPLY
 
+async def sell_select_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Ask the user for the Chain that they want"""
+    print("sell select choice-----------------===============")
+    text = update.message.text
+    context.user_data["choice"] = text
+
+    # Definition of  the chains
+    reply_chains = [
+        ["BSC"],
+        ["Avax"],
+        ["Solana"],
+    ]
+    chain_type = ReplyKeyboardMarkup(reply_chains, one_time_keyboard=True)
+
+    await update.message.reply_text(
+        f"Please choose the {emoji.emojize(':link:')} chain you want",
+        reply_markup=chain_type
+    )
+
+    return SELL_TYPING_REPLY
+
 async def select_chain(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Ask the user for the Chain that they want"""
     text = update.message.text
@@ -155,7 +176,6 @@ async def regular_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     context.user_data["choice"] = text
     print("regular_choice----------------", context)
     if text == "Private Key":
-        disabled_buttons.add(text) # Add "Private Key" to disabled buttons set
         await update.message.reply_text(f"Please input your {text} {emoji.emojize(':key:')}.")
     if text == "Chain":
         await update.message.reply_text(f"Please select the  {text} {emoji.emojize(':link:')} you want.")
@@ -163,13 +183,28 @@ async def regular_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await update.message.reply_text(f"Please input the amount of  {text} {emoji.emojize(':money_bag:')} .")
     if text == "TokenToBuyAddress":
         await update.message.reply_text(f"Please intput the {text} {emoji.emojize(':envelope:')}")
+    if text == "Wallet Address":
+        await update.message.reply_text(f"Please input the {text} {emoji.emojize(':envelope:')}")
+    return TYPING_REPLY
+
+async def sell_regular_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Display the data that the user input"""
+    text = update.message.text    
+    context.user_data["choice"] = text
+    print("sell_regular_choice----------------", context)
+
+    if text == "Private Key":
+        await update.message.reply_text(f"Please input your {text} {emoji.emojize(':key:')}.")
+    if text == "Chain":
+        await update.message.reply_text(f"Please select the  {text} {emoji.emojize(':link:')} you want.")
     if text == "TokenToSellAddress":
         await update.message.reply_text(f"Please intput the {text} {emoji.emojize(':envelope:')}")
     if text == "AmountOfToken":
         await update.message.reply_text(f"Please input the {text} {emoji.emojize(':money_bag:')}")
     if text == "Wallet Address":
         await update.message.reply_text(f"Please input the {text} {emoji.emojize(':envelope:')}")
-    return TYPING_REPLY
+
+    return SELL_TYPING_REPLY
 
 async def custom_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Ask the user for a description of a custom category."""
@@ -177,6 +212,13 @@ async def custom_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         'Do you want to add comments to this transaction? \nThen please input the comments!!! '
     )
     return TYPING_REPLY
+
+async def custom_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Ask the user for a description of a custom category."""
+    await update.message.reply_text(
+        'Do you want to add comments to this transaction? \nThen please input the comments!!! '
+    )
+    return SELL_TYPING_REPLY
 
 def is_valid_token_address(token_address: str)-> bool:
     """function to validate the TokenToBuyAddress"""
@@ -209,8 +251,8 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     )
     return ConversationHandler.END
 
-async def received_information(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Update the received_information function to include private key validation"""    
+async def buy_received_information(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Update the buy_received_information function to include private key validation"""    
     user_data = context.user_data
     text = update.message.text
     category = user_data.get("choice")  # Use get method to avoid KeyError
@@ -235,30 +277,7 @@ async def received_information(update: Update, context: ContextTypes.DEFAULT_TYP
 
         # If the input is valid, add it to user_data
         user_data[category] = text
-        
-    if category == "TokenToSellAddress":
-        if not is_valid_token_address(text):
-            await update.message.reply_text("Please enter a valid token address.")
-            return TYPING_REPLY
-        # If the input is valid, add it to user_data
-        user_data[category] = text
-
-    # if category == "Private Key":
-    #     print("private key", category)
-    #     if not is_valid_private_key(text):
-    
-    #         await update.message.reply_text("Please enter a valid private key.")
-    #         return TYPING_REPLY
-
-    #     """Mask the private key before displaying it"""
-    #     masked_private_key = text[:3] + "....."
-    #     user_data[category] = masked_private_key
-
-    #     """Delete the private key message"""
-    #     chat_id = update.message.chat_id
-    #     message_id = update.message.message_id
-    #     await context.bot.delete_message(chat_id=chat_id, message_id=message_id)
-        
+   
     else:
         user_data[category] = text
 
@@ -266,25 +285,58 @@ async def received_information(update: Update, context: ContextTypes.DEFAULT_TYP
         del user_data["choice"]
 
     print("user data in received info",user_data)
-    # Check if both "TokenToSellAddress" and "AmountOfToken" are present with non-empty values
-    if user_data.get("TokenToSellAddress") or user_data.get("AmountOfToken"):
-        token = user_data.get("TokenToSellAddress")
-        print("token to sell address ---------------------",token) 
-        await update.message.reply_text(
-            "Neat! Just so you know, this is what you already told me:"
-            f"{facts_to_str(user_data)}You can tell me more, or change your opinion"
-            " add comments",
-            reply_markup=sell_markup,
-        )
-    else:
-        await update.message.reply_text(
-            "Neat! Just so you know, this is what you already told me:"
-            f"{facts_to_str(user_data)}You can tell me more, or change your opinion"
-            " add comments",
-            reply_markup=buy_markup,
-        )
+
+    await update.message.reply_text(
+        "Neat! Just so you know, this is what you already told me:"
+        f"{facts_to_str(user_data)}You can tell me more, or change your opinion"
+        " add comments",
+        reply_markup=buy_markup,
+    )
 
     return CHOOSING
+
+async def sell_received_information(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Update the buy_received_information function to include private key validation"""    
+    user_data = context.user_data
+    text = update.message.text
+    category = user_data.get("choice")  # Use get method to avoid KeyError
+    print('sell_received info ---------')
+    if category is None:
+        category = f"{emoji.emojize(':pencil: Comments')}"
+            
+    if category == "Chain":
+        if text not in reply_chains:
+            await update.message.reply_text("Please input validate *Chain*!")
+            return SELL_TYPING_REPLY
+            
+    if category == "AmountOfToken":
+        if not text.isdigit():
+            await update.message.reply_text("Please enter the amount of Token!")
+            return SELL_TYPING_REPLY
+ 
+    if category == "TokenToSellAddress":
+        if not is_valid_token_address(text):
+            await update.message.reply_text("Please enter a valid token address.")
+            return SELL_TYPING_REPLY
+        # If the input is valid, add it to user_data
+        user_data[category] = text
+  
+    else:
+        user_data[category] = text
+
+    if "choice" in user_data:
+        del user_data["choice"]
+
+    print("user data in received info",user_data)
+
+    await update.message.reply_text(
+        "Neat! Just so you know, this is what you already told me:"
+        f"{facts_to_str(user_data)}You can tell me more, or change your opinion"
+        " add comments",
+        reply_markup=sell_markup,
+    )
+
+    return SELL_CHOOSING
 
 async def confirm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
     """confirm user's transaction"""
@@ -363,6 +415,22 @@ async def OK(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         await update.message.reply_text(f"Please provide all required input data before confirming.. \n Your input data: {facts_to_str(user_data)} ", reply_markup = buy_markup)
         return CHOOSING
 
+async def sell_ok(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int: 
+    user_data = context.user_data
+
+    if "Chain" in user_data and "TokenToSellAddress" in user_data and "AmountOfToken" in user_data:
+        """check if all required inputs have been provided"""
+        reply_confirmation = [["Confirm", "Cancel"]]
+        confirmation_markup = ReplyKeyboardMarkup(reply_confirmation, one_time_keyboard=True)
+
+        await update.message.reply_text(
+            f"Your input data: \n{facts_to_str(user_data)} \n Please confirm your transaction:",
+            reply_markup = confirmation_markup
+        )
+        return SELL_CHOOSING
+    else: 
+        await update.message.reply_text(f"Please provide all required input data before confirming.. \n Your input data: {facts_to_str(user_data)} ", reply_markup = buy_markup)
+        return SELL_CHOOSING
 
 async def exit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
     """Confirm the transaction exit function"""
@@ -438,14 +506,28 @@ def main() -> None:
                     filters.Regex("^Sell"), sell
                 ),
                 MessageHandler(
-                    filters.Regex("^Chain$"), select_choice
+                    filters.Regex("^Chain$"), buy_select_choice
                 ),
-                MessageHandler(filters.Regex("^BSC"), select_chain),
-                MessageHandler(filters.Regex("^Avax"), select_chain),
-                MessageHandler(filters.Regex("^Solana"), select_chain),
+                MessageHandler(filters.Regex("^BSC|Avax|Solana"), select_chain),
                 MessageHandler(
-                    filters.Regex("^(TokenToBuyAddress|BNB|Private Key|TokenToSellAddress|AmountOfToken)$"), regular_choice
+                    filters.Regex("^(TokenToBuyAddress|BNB|Private Key)$"), regular_choice
                 ),
+                MessageHandler(filters.Regex("^OK$"), OK),
+                MessageHandler(filters.Regex("^Add comments$"), custom_choice),
+                MessageHandler(filters.Regex("^Exit$"), exit),
+                MessageHandler(filters.Regex("^Confirm$"), confirm),
+                MessageHandler(filters.Regex("^Yes$"), confirm_exit_yes),
+                MessageHandler(filters.Regex("^No"), confirm_exit_no)
+            ],
+            SELL_CHOOSING: [
+                MessageHandler(
+                    filters.Regex("^Chain$"), sell_select_choice
+                ),
+                MessageHandler(filters.Regex("^BSC|Avax|Solana"), select_chain),
+                MessageHandler(
+                    filters.Regex("^(TokenToSellAddress|AmountOfToken)$"), sell_regular_choice
+                ),
+                MessageHandler(filters.Regex("^OK$"), sell_ok),
                 MessageHandler(filters.Regex("^Add comments$"), custom_choice),
                 MessageHandler(filters.Regex("^Exit$"), exit),
                 MessageHandler(filters.Regex("^Confirm$"), confirm),
@@ -456,9 +538,6 @@ def main() -> None:
                 MessageHandler(
                     filters.TEXT & ~(filters.COMMAND | filters.Regex("^OK$")), wallet_address_input
                 ),
-                #  MessageHandler(
-                #     filters.TEXT & ~(filters.COMMAND | filters.Regex("^OK$")), private_key_input
-                # ),
             ],
             TYPING_PRIVATE_KEY: [
                 MessageHandler(
@@ -468,12 +547,18 @@ def main() -> None:
             TYPING_REPLY: [
                 MessageHandler(
                     filters.TEXT & ~(filters.COMMAND | filters.Regex("^OK$")),
-                    received_information,
+                    buy_received_information,
+                )
+            ],
+            SELL_TYPING_REPLY: [
+                MessageHandler(
+                    filters.TEXT & ~(filters.COMMAND | filters.Regex("^OK$")),
+                    sell_received_information,
                 )
             ],
         },
         fallbacks=[
-            MessageHandler(filters.Regex("^OK$"), OK),
+            # MessageHandler(filters.Regex("^OK$"), OK),
             MessageHandler(filters.Regex("^Cancel$"), cancel),
             CommandHandler("quit", quit_order),
             CommandHandler("help", help)
