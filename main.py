@@ -66,9 +66,10 @@ def facts_to_str(user_data: Dict[str, str]) -> str:
     facts = [
         f"{emoji.emojize(':link: Chain')} : {value}" if key == 'Chain' else
         f"{emoji.emojize(':money_bag: BNB')} : {value}" if key == "BNB" else
+        f"{emoji.emojize(':receipt: TokenToSellAddress')}: {value}" if key == "TokenToSellAddress" else
         f"{emoji.emojize(':receipt: TokenToBuyAddress')}: {value}" if key == "TokenToBuyAddress" else
+        f"{emoji.emojize(':money_bag: AmountOfToken')}: {value}" if key == "AmountOfToken" else
         f"{emoji.emojize(':key: Private Key')} : {value}" if key == 'Private Key' else
-        # f"Comments: {value}" if key == "Add comments" else
         f"{key} : {value}"
         for key, value in user_data.items() 
     ]
@@ -164,6 +165,8 @@ async def regular_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await update.message.reply_text(f"Please intput the {text} {emoji.emojize(':envelope:')}")
     if text == "TokenToSellAddress":
         await update.message.reply_text(f"Please intput the {text} {emoji.emojize(':envelope:')}")
+    if text == "AmountOfToken":
+        await update.message.reply_text(f"Please input the {text} {emoji.emojize(':money_bag:')}")
     if text == "Wallet Address":
         await update.message.reply_text(f"Please input the {text} {emoji.emojize(':envelope:')}")
     return TYPING_REPLY
@@ -301,7 +304,7 @@ async def wallet_address_input(update: Update, context: ContextTypes.DEFAULT_TYP
             await update.message.reply_text("Please input a valid wallet address.")
             return TYPING_CHOICE
     user_data["Wallet Address"] = wallet_address
-    print("wallet address!!!-------", user_data)
+
     await update.message.reply_text(
         "Please input your wallet private key!",
     )
