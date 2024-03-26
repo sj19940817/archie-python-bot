@@ -27,13 +27,13 @@ logger = logging.getLogger(__name__)
 
 disabled_buttons = set()
 
-CHOOSING, TYPING_REPLY, TYPING_CHOICE = range(3)
+CHOOSING, TYPING_REPLY, TYPING_CHOICE, TYPING_PRIVATE_KEY = range(4)
 
 buy_reply_keyboard = [
     [{"text": "Chain", "request_contact": False},
      {"text": "TokenToBuyAddress", "request_contact": False}],
-    [{"text": "BNB", "request_contact": False }, 
-     {"text": "Add comments", "request": True}], 
+    [{"text": "BNB", "request_contact": False },    
+     {"text": "Add comments", "request": True}],
     [{"text": "OK", "request_contact": False},
      {"text": "Exit", "request": False}],
 ]
@@ -164,7 +164,8 @@ async def regular_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await update.message.reply_text(f"Please intput the {text} {emoji.emojize(':envelope:')}")
     if text == "TokenToSellAddress":
         await update.message.reply_text(f"Please intput the {text} {emoji.emojize(':envelope:')}")
-
+    if text == "Wallet Address":
+        await update.message.reply_text(f"Please input the {text} {emoji.emojize(':envelope:')}")
     return TYPING_REPLY
 
 async def custom_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -186,6 +187,10 @@ def is_valid_token_address(token_address: str)-> bool:
     except ValueError:
         return False
 
+def is_valid_wallet_address(wallet_address) -> bool:
+    """Function to validate the wallet address"""
+    return bool(re.match(r"^[A-Fa-f0-9]{42}$", wallet_address))
+
 def is_valid_private_key(private_key):
     """Function to validate the private key"""
     print(private_key)
@@ -206,10 +211,10 @@ async def received_information(update: Update, context: ContextTypes.DEFAULT_TYP
     user_data = context.user_data
     text = update.message.text
     category = user_data.get("choice")  # Use get method to avoid KeyError
-    print('here confirm exit no---------')
+    print('received infor ---------')
     if category is None:
         category = f"{emoji.emojize(':pencil: Comments')}"
-
+            
     if category == "Chain":
         if text not in reply_chains:
             await update.message.reply_text("Please input validate *Chain*!")
@@ -235,21 +240,21 @@ async def received_information(update: Update, context: ContextTypes.DEFAULT_TYP
         # If the input is valid, add it to user_data
         user_data[category] = text
 
-    if category == "Private Key":
-        print("private key", category)
-        if not is_valid_private_key(text):
+    # if category == "Private Key":
+    #     print("private key", category)
+    #     if not is_valid_private_key(text):
     
-            await update.message.reply_text("Please enter a valid private key.")
-            return TYPING_REPLY
+    #         await update.message.reply_text("Please enter a valid private key.")
+    #         return TYPING_REPLY
 
-        """Mask the private key before displaying it"""
-        masked_private_key = text[:3] + "....."
-        user_data[category] = masked_private_key
+    #     """Mask the private key before displaying it"""
+    #     masked_private_key = text[:3] + "....."
+    #     user_data[category] = masked_private_key
 
-        """Delete the private key message"""
-        chat_id = update.message.chat_id
-        message_id = update.message.message_id
-        await context.bot.delete_message(chat_id=chat_id, message_id=message_id)
+    #     """Delete the private key message"""
+    #     chat_id = update.message.chat_id
+    #     message_id = update.message.message_id
+    #     await context.bot.delete_message(chat_id=chat_id, message_id=message_id)
         
     else:
         user_data[category] = text
@@ -259,8 +264,9 @@ async def received_information(update: Update, context: ContextTypes.DEFAULT_TYP
 
     print("user data in received info",user_data)
     # Check if both "TokenToSellAddress" and "AmountOfToken" are present with non-empty values
-    if user_data.get("TokenToSellAddress") and user_data.get("AmountOfToken"):
-        print("here we are")
+    if user_data.get("TokenToSellAddress") or user_data.get("AmountOfToken"):
+        token = user_data.get("TokenToSellAddress")
+        print("token to sell address ---------------------",token) 
         await update.message.reply_text(
             "Neat! Just so you know, this is what you already told me:"
             f"{facts_to_str(user_data)}You can tell me more, or change your opinion"
@@ -280,9 +286,28 @@ async def received_information(update: Update, context: ContextTypes.DEFAULT_TYP
 async def confirm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
     """confirm user's transaction"""
     print("context user data",context.user_data)
-
-    await update.message.reply_text("Please input your wallet private key!")
+    await update.message.reply_text("Please input your wallet address!")
+    # await update.message.reply_text("Please input your wallet private key!")
     return TYPING_CHOICE
+
+async def wallet_address_input(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Ask the user to input the wallet address."""
+    user_data = context.user_data
+    wallet_address = update.message.text
+    selected_chain = user_data.get("Chain")
+
+    if selected_chain != "Solana":
+        if not is_valid_wallet_address(wallet_address):
+            await update.message.reply_text("Please input a valid wallet address.")
+            return TYPING_CHOICE
+    user_data["Wallet Address"] = wallet_address
+    print("wallet address!!!-------", user_data)
+    await update.message.reply_text(
+        "Please input your wallet private key!",
+    )
+
+    return TYPING_PRIVATE_KEY
+
 async def private_key_input(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Ask the user to input the private key."""
     user_data = context.user_data
@@ -302,7 +327,7 @@ async def private_key_input(update: Update, context: ContextTypes.DEFAULT_TYPE) 
                 return ConversationHandler.END  # End the conversation
             else:
                 await update.message.reply_text("Please input a valid private key.")
-                return TYPING_CHOICE
+                return TYPING_PRIVATE_KEY
 
         # If the private key is valid, delete the message
         user_data["Private Key"] = private_key
@@ -312,6 +337,7 @@ async def private_key_input(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         
     # Provide feedback that the private key has been received
     await update.message.reply_text("Private key received. Proceeding with the transaction.")
+    print("final user data-----", user_data)
     await buy_tokens(update, context)
     # Continue with the transaction process or other actions
 
@@ -431,8 +457,16 @@ def main() -> None:
             ],
             TYPING_CHOICE: [
                 MessageHandler(
-                    filters.TEXT & ~(filters.COMMAND | filters.Regex("^OK$")), private_key_input
+                    filters.TEXT & ~(filters.COMMAND | filters.Regex("^OK$")), wallet_address_input
                 ),
+                #  MessageHandler(
+                #     filters.TEXT & ~(filters.COMMAND | filters.Regex("^OK$")), private_key_input
+                # ),
+            ],
+            TYPING_PRIVATE_KEY: [
+                MessageHandler(
+                    filters.TEXT & ~(filters.COMMAND | filters.Regex("^OK$")), private_key_input
+                    ),
             ],
             TYPING_REPLY: [
                 MessageHandler(
