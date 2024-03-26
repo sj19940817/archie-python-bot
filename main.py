@@ -61,6 +61,11 @@ async def buy_tokens(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     print("Buy tokens using pancakeswap------------------", update, context)
     pass
 
+async def sell_tokens(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    # implement logic to buy tokens on PancakeSwap
+    print("Sell tokens using pancakeswap------------------", update, context)
+    pass
+
 def facts_to_str(user_data: Dict[str, str]) -> str:
     """Helper function for formatting the gathered user info."""
     facts = [
@@ -345,6 +350,13 @@ async def confirm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
     # await update.message.reply_text("Please input your wallet private key!")
     return TYPING_CHOICE
 
+async def sell_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
+    """confirm user's transaction"""
+    print("context user data",context.user_data)
+    await update.message.reply_text("Please input your wallet address!")
+    # await update.message.reply_text("Please input your wallet private key!")
+    return TYPING_CHOICE
+
 async def wallet_address_input(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Ask the user to input the wallet address."""
     user_data = context.user_data
@@ -368,6 +380,7 @@ async def private_key_input(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     user_data = context.user_data
     private_key = update.message.text
     selected_chain = user_data.get("Chain")
+    selected_token = user_data.get("TokenToBuyAddress")
 
     if selected_chain != "Solana":
         if not is_valid_private_key(private_key):
@@ -393,7 +406,10 @@ async def private_key_input(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     # Provide feedback that the private key has been received
     await update.message.reply_text("Private key received. Proceeding with the transaction.")
     print("final user data-----", user_data)
-    await buy_tokens(update, context)
+    if selected_token in user_data:
+        await buy_tokens(update, context)
+
+    await sell_tokens(update, context)
     # Continue with the transaction process or other actions
 
     return CHOOSING  # Move to the next step in the conversation
@@ -444,6 +460,19 @@ async def exit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
         reply_markup=exit_markup
     )
     return CHOOSING
+
+async def sell_exit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
+    """Confirm the transaction exit function"""
+    print("exit function")
+    user_data = context.user_data
+    exit_confirmation = [["Yes", "No"]]
+    exit_markup = ReplyKeyboardMarkup(exit_confirmation, one_time_keyboard=True)
+
+    await update.message.reply_text(
+        f"Do you really want to cancel the transaction?",
+        reply_markup=exit_markup
+    )
+    return SELL_CHOOSING
     
 async def confirm_exit_yes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
     """Exit the transaction"""
@@ -470,6 +499,19 @@ async def confirm_exit_no(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         reply_markup=buy_markup
     )
 
+async def sell_confirm_exit_no(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
+    """Return to the transaction"""
+
+    user_data = context.user_data
+
+    print("confirm_exit_no", user_data )
+
+    await update.message.reply_text(
+        "Neat! Just so you know, this is what you already told me:"
+        f"{facts_to_str(user_data)}You can tell me more, or change your opinion"
+        " add comments",
+        reply_markup=sell_markup
+    )
 async def quit_order(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Redirect the user when he or she input the command /quit..."""
     user_data = context.user_data
@@ -529,10 +571,10 @@ def main() -> None:
                 ),
                 MessageHandler(filters.Regex("^OK$"), sell_ok),
                 MessageHandler(filters.Regex("^Add comments$"), sell_add_comments),
-                MessageHandler(filters.Regex("^Exit$"), exit),
-                MessageHandler(filters.Regex("^Confirm$"), confirm),
+                MessageHandler(filters.Regex("^Exit$"), sell_exit),
+                MessageHandler(filters.Regex("^Confirm$"), sell_confirm),
                 MessageHandler(filters.Regex("^Yes$"), confirm_exit_yes),
-                MessageHandler(filters.Regex("^No"), confirm_exit_no)
+                MessageHandler(filters.Regex("^No"), sell_confirm_exit_no)
             ],
             TYPING_CHOICE: [
                 MessageHandler(
