@@ -206,14 +206,14 @@ async def sell_regular_choice(update: Update, context: ContextTypes.DEFAULT_TYPE
 
     return SELL_TYPING_REPLY
 
-async def custom_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def add_comments(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Ask the user for a description of a custom category."""
     await update.message.reply_text(
         'Do you want to add comments to this transaction? \nThen please input the comments!!! '
     )
     return TYPING_REPLY
 
-async def custom_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def sell_add_comments(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Ask the user for a description of a custom category."""
     await update.message.reply_text(
         'Do you want to add comments to this transaction? \nThen please input the comments!!! '
@@ -513,7 +513,7 @@ def main() -> None:
                     filters.Regex("^(TokenToBuyAddress|BNB|Private Key)$"), regular_choice
                 ),
                 MessageHandler(filters.Regex("^OK$"), OK),
-                MessageHandler(filters.Regex("^Add comments$"), custom_choice),
+                MessageHandler(filters.Regex("^Add comments$"), add_comments),
                 MessageHandler(filters.Regex("^Exit$"), exit),
                 MessageHandler(filters.Regex("^Confirm$"), confirm),
                 MessageHandler(filters.Regex("^Yes$"), confirm_exit_yes),
@@ -528,7 +528,7 @@ def main() -> None:
                     filters.Regex("^(TokenToSellAddress|AmountOfToken)$"), sell_regular_choice
                 ),
                 MessageHandler(filters.Regex("^OK$"), sell_ok),
-                MessageHandler(filters.Regex("^Add comments$"), custom_choice),
+                MessageHandler(filters.Regex("^Add comments$"), sell_add_comments),
                 MessageHandler(filters.Regex("^Exit$"), exit),
                 MessageHandler(filters.Regex("^Confirm$"), confirm),
                 MessageHandler(filters.Regex("^Yes$"), confirm_exit_yes),
