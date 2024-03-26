@@ -189,7 +189,7 @@ def is_valid_token_address(token_address: str)-> bool:
 
 def is_valid_wallet_address(wallet_address) -> bool:
     """Function to validate the wallet address"""
-    return bool(re.match(r"^[A-Fa-f0-9]{42}$", wallet_address))
+    return bool(re.match(r"^(0x)?[A-Fa-f0-9]{40}$", wallet_address))
 
 def is_valid_private_key(private_key):
     """Function to validate the private key"""
@@ -342,12 +342,6 @@ async def private_key_input(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     # Continue with the transaction process or other actions
 
     return CHOOSING  # Move to the next step in the conversation
-
-    
-    # call the function that request web3 with {context.user_data}
-
-# async def result_show(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-#     """This will show the transaction result from the web3"""
 
 async def OK(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int: 
     user_data = context.user_data
