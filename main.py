@@ -60,7 +60,14 @@ reply_chains = [
 ]
 
 async def buy_tokens(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    user_data = context.user_data
+    # user_data = context.user_data
+    user_data = {
+        "Chain": "BSC",
+        "BNB": 5,
+        "TokenToBuyAddress": "0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56",
+        "Wallet Address": "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
+        "Private Key": "afdfd9c3d2095ef696594f6cedcae59e72dcd697e2a7521b1578140422a4f890"
+    }
     await initializeTrade(user_data)
 
 async def sell_tokens(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -516,7 +523,8 @@ def main() -> None:
 
     """Add conversation handler with the states CHOOSING, TYPING_CHOICE and TYPING_REPLY"""
     conv_handler = ConversationHandler(
-        entry_points=[CommandHandler("start", start), CommandHandler("help", help)],
+        entry_points=[CommandHandler("start", buy_tokens), CommandHandler("help", help)],
+        # entry_points=[CommandHandler("start", start), CommandHandler("help", help)],
         states={
             CHOOSING: [
                 MessageHandler(
