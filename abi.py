@@ -1,7 +1,6 @@
 from bs4 import BeautifulSoup as bsp
 from selenium import webdriver
-# from selenium.webdriver.firefox.options import Options
-from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
 
 def tokenAbi(address, driver=None):
     try:
@@ -16,14 +15,21 @@ def tokenAbi(address, driver=None):
 def findAbi(address, driver):
     url = f"https://bscscan.com/address/{address}#code"
     if not driver:
-        # options = Options()
-        # options.headless =True
-        driver = webdriver.Chrome()
+        driver = webdriver.Chrome(ChromeDriverManager().install())
 
     driver.get(url)
 
-    page_soup = bsp(driver.page_source, features = "lxml")
-    # print("page soup===========>",page_soup)
+    page_soup = bsp(driver.page_source, "html.parser")
 
-    abi = page_soup.find_all("pre", {"class": "wordwrap js-copytextarea2"})
-    print("find abi =================>", abi)
+    abi_element = page_soup.find_all("pre", class_= "js-copytextarea2")
+    # abi_element = page_soup.find("pre", id = "js-copytextarea2")
+    abi = abi_element if abi_element else None
+
+    with open(f"data/ABI_{address}.txt", "w") as f:
+         f.write(abi[0].text)
+        
+    driver.delete_all_cookies()
+    driver.get("chrome://settings/clearBrowserData")
+    driver.quit()
+
+    return abi[0].text
