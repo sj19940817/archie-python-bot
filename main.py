@@ -10,10 +10,13 @@ from telegram.ext import (
     ConversationHandler,
     MessageHandler,
     filters,
-    CallbackContext
 )
 
-from config import Token
+from config import Bot_Token
+import requests
+from  swap_tokens import initializeTrade
+
+# from EVM import doSwapAction
 
 """Enable logging"""
 logging.basicConfig(
@@ -57,13 +60,12 @@ reply_chains = [
 ]
 
 async def buy_tokens(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    # implement logic to buy tokens on PancakeSwap
-    print("Buy tokens using pancakeswap------------------", update, context)
-    pass
+    user_data = context.user_data
+    await initializeTrade(user_data)
 
 async def sell_tokens(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     # implement logic to buy tokens on PancakeSwap
-    print("Sell tokens using pancakeswap------------------", update, context)
+    print("sell_tokens")
     pass
 
 def facts_to_str(user_data: Dict[str, str]) -> str:
@@ -82,7 +84,7 @@ def facts_to_str(user_data: Dict[str, str]) -> str:
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Start the conversation and ask user for the data."""
-    
+
     buy_sell_keyboard = [
        ["Buy",
         "Sell"]
@@ -106,7 +108,6 @@ async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def sell(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """sell token function"""
-    print("sell----------------")
     await update.message.reply_text(
         "Input address and the amount of token you want to sell.",
         reply_markup=sell_markup,
@@ -122,11 +123,10 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def buy_select_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Ask the user for the Chain that they want"""
-    print(context)
     text = update.message.text
     context.user_data["choice"] = text
 
-    # Definition of  the chains
+    # Types of  the chain
     reply_chains = [
         ["BSC"],
         ["Avax"],
@@ -138,12 +138,10 @@ async def buy_select_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         f"Please choose the {emoji.emojize(':link:')} chain you want",
         reply_markup=chain_type
     )
-
     return TYPING_REPLY
 
 async def sell_select_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Ask the user for the Chain that they want"""
-    print("sell select choice-----------------===============")
     text = update.message.text
     context.user_data["choice"] = text
 
@@ -179,7 +177,6 @@ async def regular_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     text = update.message.text
     
     context.user_data["choice"] = text
-    print("regular_choice----------------", context)
     if text == "Private Key":
         await update.message.reply_text(f"Please input your {text} {emoji.emojize(':key:')}.")
     if text == "Chain":
@@ -196,7 +193,6 @@ async def sell_regular_choice(update: Update, context: ContextTypes.DEFAULT_TYPE
     """Display the data that the user input"""
     text = update.message.text    
     context.user_data["choice"] = text
-    print("sell_regular_choice----------------", context)
 
     if text == "Private Key":
         await update.message.reply_text(f"Please input your {text} {emoji.emojize(':key:')}.")
@@ -243,7 +239,6 @@ def is_valid_wallet_address(wallet_address) -> bool:
 
 def is_valid_private_key(private_key):
     """Function to validate the private key"""
-    print(private_key)
     return bool(re.match(r"^[A-Fa-f0-9]{64}$", private_key))
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -261,7 +256,7 @@ async def buy_received_information(update: Update, context: ContextTypes.DEFAULT
     user_data = context.user_data
     text = update.message.text
     category = user_data.get("choice")  # Use get method to avoid KeyError
-    print('received infor ---------')
+
     if category is None:
         category = f"{emoji.emojize(':pencil: Comments')}"
             
@@ -289,8 +284,6 @@ async def buy_received_information(update: Update, context: ContextTypes.DEFAULT
     if "choice" in user_data:
         del user_data["choice"]
 
-    print("user data in received info",user_data)
-
     await update.message.reply_text(
         "Neat! Just so you know, this is what you already told me:"
         f"{facts_to_str(user_data)}You can tell me more, or change your opinion"
@@ -305,23 +298,22 @@ async def sell_received_information(update: Update, context: ContextTypes.DEFAUL
     user_data = context.user_data
     text = update.message.text
     category = user_data.get("choice")  # Use get method to avoid KeyError
-    print('sell_received info ---------')
     if category is None:
         category = f"{emoji.emojize(':pencil: Comments')}"
             
     if category == "Chain":
         if text not in reply_chains:
-            await update.message.reply_text("Please input validate *Chain*!")
+            await update.message.reply_text("Please input the valid *Chain*!")
             return SELL_TYPING_REPLY
             
     if category == "AmountOfToken":
         if not text.isdigit():
-            await update.message.reply_text("Please enter the amount of Token!")
+            await update.message.reply_text("Please input the amount of Token!")
             return SELL_TYPING_REPLY
  
     if category == "TokenToSellAddress":
         if not is_valid_token_address(text):
-            await update.message.reply_text("Please enter a valid token address.")
+            await update.message.reply_text("Please input a valid token address.")
             return SELL_TYPING_REPLY
         # If the input is valid, add it to user_data
         user_data[category] = text
@@ -331,8 +323,6 @@ async def sell_received_information(update: Update, context: ContextTypes.DEFAUL
 
     if "choice" in user_data:
         del user_data["choice"]
-
-    print("user data in received info",user_data)
 
     await update.message.reply_text(
         "Neat! Just so you know, this is what you already told me:"
@@ -345,16 +335,13 @@ async def sell_received_information(update: Update, context: ContextTypes.DEFAUL
 
 async def confirm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
     """confirm user's transaction"""
-    print("context user data",context.user_data)
     await update.message.reply_text("Please input your wallet address!")
-    # await update.message.reply_text("Please input your wallet private key!")
+    
     return TYPING_CHOICE
 
 async def sell_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
     """confirm user's transaction"""
-    print("context user data",context.user_data)
     await update.message.reply_text("Please input your wallet address!")
-    # await update.message.reply_text("Please input your wallet private key!")
     return TYPING_CHOICE
 
 async def wallet_address_input(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -380,8 +367,7 @@ async def private_key_input(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     user_data = context.user_data
     private_key = update.message.text
     selected_chain = user_data.get("Chain")
-    selected_token = user_data.get("TokenToBuyAddress")
-
+    
     if selected_chain != "Solana":
         if not is_valid_private_key(private_key):
             if "private_key_attempts" not in user_data:
@@ -403,13 +389,19 @@ async def private_key_input(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         message_id = update.message.message_id
         await context.bot.delete_message(chat_id=chat_id, message_id=message_id)
         
-    # Provide feedback that the private key has been received
+    # Provide reply that the private key has been received
     await update.message.reply_text("Private key received. Proceeding with the transaction.")
-    print("final user data-----", user_data)
-    if selected_token in user_data:
-        await buy_tokens(update, context)
+    
+    for key in user_data.keys():
+        if key == "TokenToBuyAddress":
+            await buy_tokens(update, context)
+            return False
+        if key == "TokenToSellAddress":
+            await sell_tokens(update, context)
+            return False
+        # else:
+        #     return False
 
-    await sell_tokens(update, context)
     # Continue with the transaction process or other actions
 
     return CHOOSING  # Move to the next step in the conversation
@@ -450,8 +442,7 @@ async def sell_ok(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def exit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
     """Confirm the transaction exit function"""
-    print("exit function")
-    user_data = context.user_data
+
     exit_confirmation = [["Yes", "No"]]
     exit_markup = ReplyKeyboardMarkup(exit_confirmation, one_time_keyboard=True)
 
@@ -463,8 +454,7 @@ async def exit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
 
 async def sell_exit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
     """Confirm the transaction exit function"""
-    print("exit function")
-    user_data = context.user_data
+    
     exit_confirmation = [["Yes", "No"]]
     exit_markup = ReplyKeyboardMarkup(exit_confirmation, one_time_keyboard=True)
 
@@ -490,8 +480,6 @@ async def confirm_exit_no(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     user_data = context.user_data
 
-    print("confirm_exit_no", user_data )
-
     await update.message.reply_text(
         "Neat! Just so you know, this is what you already told me:"
         f"{facts_to_str(user_data)}You can tell me more, or change your opinion"
@@ -503,8 +491,6 @@ async def sell_confirm_exit_no(update: Update, context: ContextTypes.DEFAULT_TYP
     """Return to the transaction"""
 
     user_data = context.user_data
-
-    print("confirm_exit_no", user_data )
 
     await update.message.reply_text(
         "Neat! Just so you know, this is what you already told me:"
@@ -522,19 +508,11 @@ async def quit_order(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     )
     return ConversationHandler.END
 
-async def delete_message(update: Update, context: CallbackContext) -> None:
-    #Get the chat ID and message ID
-    chat_id = update.message.chat_id
-    message_id = update.message.message_id
-
-    #Delete the message
-    context.bot.delet_message(chat_id = chat_id, message_id = message_id)
-
 def main() -> None:
     """Run the bot."""
 
     """Create the Application and pass it your bot's token."""
-    application = Application.builder().token(Token).build()
+    application = Application.builder().token(Bot_Token).build()
 
     """Add conversation handler with the states CHOOSING, TYPING_CHOICE and TYPING_REPLY"""
     conv_handler = ConversationHandler(
@@ -600,7 +578,6 @@ def main() -> None:
             ],
         },
         fallbacks=[
-            # MessageHandler(filters.Regex("^OK$"), OK),
             MessageHandler(filters.Regex("^Cancel$"), cancel),
             CommandHandler("quit", quit_order),
             CommandHandler("help", help)
