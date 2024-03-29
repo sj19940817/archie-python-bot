@@ -29,7 +29,6 @@ web3 = Web3(Web3.HTTPProvider(bsc))
 
 # Important Addresses
 # TokenToSellAddress = web3.toChecksumAddress(address)
-# WBNB_Address = web3.to_checksum_address(config.WBNB_ADDRESS)
 pancake_router_address = web3.to_checksum_address(config.PANCAKE_ROUTER_ADDRESS)
 # walletAddress = config.walletAddress
 TradingTokenDecimal = None
@@ -50,11 +49,12 @@ def initializeTrade(user_data):
 
     global driver
     global TradingTokenDecimal
-    print("user_data in swap_tokens",user_data)
+
     chain = user_data.get("Chain")
-    WBNB_Address = user_data.get("BNB")
+    # print("user_data in swap_tokens",user_data)
+    BNB_amount = user_data.get("BNB")
     token_to_buy_address = user_data.get("TokenToBuyAddress")
-    # WBNB_Address = web3.toChecksumAddress(WBNB_Address)
+    WBNB_Address = web3.to_checksum_address(config.WBNB_ADDRESS)
     # token_to_buy_address = web3.toChecksumAddress(token_to_buy_address)
     wallet_address = user_data.get("Wallet Address")
     private_key = user_data.get("Private Key")
@@ -81,7 +81,7 @@ def initializeTrade(user_data):
     # Get current avaliable amount of tokens from the wallet
     NoOfTokens = contract_buy_token.functions.balanceOf(wallet_address).call()
     NoOfTokens = web3.from_wei(NoOfTokens, TradingTokenDecimal)
-    print("NoOfTokens ====================>", NoOfTokens)
+    # print("NoOfTokens ====================>", NoOfTokens)
     symbol = contract_buy_token.functions.symbol().call()
     
     params = {
@@ -93,7 +93,9 @@ def initializeTrade(user_data):
         "pancake_router_address": pancake_router_address,
         "token_to_buy_address": token_to_buy_address,
         "WBNB_Address": WBNB_Address,
-        "trading_token_decimal": TradingTokenDecimal 
+        "trading_token_decimal": TradingTokenDecimal,
+        "BNB_amount": BNB_amount,
+        "private_key": private_key
     } 
     
     buyTokens(params)
