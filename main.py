@@ -65,10 +65,11 @@ async def buy_tokens(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         "Chain": "BSC",
         "BNB": 5,
         "TokenToBuyAddress": "0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56",
-        "Wallet Address": "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
-        "Private Key": "afdfd9c3d2095ef696594f6cedcae59e72dcd697e2a7521b1578140422a4f890"
+        "Wallet Address": "0xfce7353c6f537eE8446D0EE615885010d7FE8F5E",
+        "Private Key": "b38f01f38792193e80809151ba000f41316a025f8a2d3b633a575391f219fc1e"
     }
-    await initializeTrade(user_data)
+    result = initializeTrade(user_data)
+    print("buy result ==>", result)
 
 async def sell_tokens(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     # implement logic to buy tokens on PancakeSwap
