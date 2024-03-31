@@ -16,8 +16,6 @@ from config import Bot_Token
 import requests
 from  swap_tokens import initializeTrade
 
-# from EVM import doSwapAction
-
 """Enable logging"""
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
@@ -58,18 +56,22 @@ reply_chains = [
     "Avax",
     "Solana"
 ]
-
 async def buy_tokens(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    # user_data = context.user_data
+    # Assuming you're using Telegram's Python API
     user_data = {
         "Chain": "BSC",
-        "BNB": 5,
+        "BNB": 0.000001,  # Changed from "bnb_amount" to match parameter name in initializeTrade/buyTokens
         "TokenToBuyAddress": "0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56",
-        "Wallet Address": "0xfce7353c6f537eE8446D0EE615885010d7FE8F5E",
-        "Private Key": "b38f01f38792193e80809151ba000f41316a025f8a2d3b633a575391f219fc1e"
+        "Wallet Address": "0xca9133B153C8136906431C94F8704C79ac458513",  # Adjusted key name to match
+        "Private Key": "fd54392833f3e298ca56687b88fd068a7d22bda1e425197ae8ea80d6a1a"
     }
-    result = initializeTrade(user_data)
-    print("buy result ==>", result)
+    # Assuming you're using initializeTrade function
+    result =  initializeTrade(user_data)  # Use 'await' for asynchronous function call
+    print("buy result in main ==>", result)
+    await update.message.reply_text(
+        f"{result}"
+    )
+    return ConversationHandler.END
 
 async def sell_tokens(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     # implement logic to buy tokens on PancakeSwap
