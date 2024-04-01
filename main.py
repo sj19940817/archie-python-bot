@@ -14,7 +14,7 @@ from telegram.ext import (
 
 from config import Bot_Token
 import requests
-from  swap_tokens import initializeTrade
+from  swap_tokens import initialize_buy, initialize_sell
 
 """Enable logging"""
 logging.basicConfig(
@@ -58,16 +58,8 @@ reply_chains = [
 ]
 async def buy_tokens(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     # Assuming you're using Telegram's Python API
-    user_data = {
-        "Chain": "BSC",
-        "BNB": 0.000001,  # Changed from "bnb_amount" to match parameter name in initializeTrade/buyTokens
-        "TokenToBuyAddress": "0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56",
-        "Wallet Address": "0xca9133B153C8136906431C94F8704C79ac458513",  # Adjusted key name to match
-        "Private Key": "fd54392833f3e298ca56687b88fd068a7d22bda1e425197ae8ea80d6a1a"
-    }
-    # Assuming you're using initializeTrade function
-    result =  initializeTrade(user_data)  # Use 'await' for asynchronous function call
-    print("buy result in main ==>", result)
+    user_data = context.user_data
+    result =  initialize_buy(user_data)  # Use 'await' for asynchronous function call
     await update.message.reply_text(
         f"{result}"
     )
@@ -75,8 +67,13 @@ async def buy_tokens(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def sell_tokens(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     # implement logic to buy tokens on PancakeSwap
-    print("sell_tokens")
-    pass
+    user_data = context.user_data
+    result = initialize_sell(user_data)
+    await update.message.reply_text(
+        f"{result}"
+    )    
+    return ConversationHandler.END
+
 
 def facts_to_str(user_data: Dict[str, str]) -> str:
     """Helper function for formatting the gathered user info."""
@@ -261,6 +258,17 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     )
     return ConversationHandler.END
 
+def is_valid_amount(text):
+    try:
+        int_value = int(text)
+        return True
+    except ValueError:
+        try:
+            float_value = float(text)
+            return True
+        except ValueError:
+            return False
+
 async def buy_received_information(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Update the buy_received_information function to include private key validation"""    
     user_data = context.user_data
@@ -276,7 +284,7 @@ async def buy_received_information(update: Update, context: ContextTypes.DEFAULT
             return TYPING_REPLY
             
     if category == "BNB":
-        if not text.isdigit():
+        if not is_valid_amount(text):
             await update.message.reply_text("Please enter the amount of BNB!")
             return TYPING_REPLY
         
@@ -317,10 +325,10 @@ async def sell_received_information(update: Update, context: ContextTypes.DEFAUL
             return SELL_TYPING_REPLY
             
     if category == "AmountOfToken":
-        if not text.isdigit():
-            await update.message.reply_text("Please input the amount of Token!")
-            return SELL_TYPING_REPLY
- 
+        if not is_valid_amount(text):
+            await update.message.reply_text("Please enter the valid amount of token!")
+            return TYPING_REPLY
+        
     if category == "TokenToSellAddress":
         if not is_valid_token_address(text):
             await update.message.reply_text("Please input a valid token address.")
@@ -403,7 +411,7 @@ async def private_key_input(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     await update.message.reply_text("Private key received. Proceeding with the transaction.")
     
     for key in user_data.keys():
-        if key == "TokenToBuyAddress":
+        if key == "TokenToBuyAddress":        
             await buy_tokens(update, context)
             return False
         if key == "TokenToSellAddress":
@@ -526,8 +534,8 @@ def main() -> None:
 
     """Add conversation handler with the states CHOOSING, TYPING_CHOICE and TYPING_REPLY"""
     conv_handler = ConversationHandler(
-        entry_points=[CommandHandler("start", buy_tokens), CommandHandler("help", help)],
-        # entry_points=[CommandHandler("start", start), CommandHandler("help", help)],
+        # entry_points=[CommandHandler("start", sell_tokens), CommandHandler("help", help)],
+        entry_points=[CommandHandler("start", start), CommandHandler("help", help)],
         states={
             CHOOSING: [
                 MessageHandler(

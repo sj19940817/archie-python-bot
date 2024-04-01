@@ -9,15 +9,10 @@ def buyTokens(params):
    contract_pancake = params.get("contract_pancake")
    token_to_buy_address = params.get("token_to_buy_address")
    WBNB_Address = params.get("WBNB_Address")
-   contract_wbnb = params.get("contract_wbnb")
    BNB_amount = params.get("BNB_amount")
    private_key = params.get("private_key")
    BNB_amount_in_wei = web3.to_wei(BNB_amount, 'ether')
-   pancake_router_address = config.PANCAKE_ROUTER_ADDRESS
 
-   gas_limit = 200000
-   gas_price = 1000000000
-   
    pancakeSwap_txn = contract_pancake.functions.swapExactETHForTokens(
       0,
       [WBNB_Address, token_to_buy_address],
@@ -33,16 +28,11 @@ def buyTokens(params):
    try:
       signed_txn = web3.eth.account.sign_transaction(pancakeSwap_txn, private_key)
       tx_token = web3.eth.send_raw_transaction(signed_txn.rawTransaction)
-      result = [web3.to_hex(tx_token), f"Bought {web3.from_wei(BNB_amount, 'ether')} BNB of {symbol}"]
-      print("return in buy =================>",result)
+      # result = [web3.to_hex(tx_token), f"Bought {BNB_amount_in_wei} BNB of {symbol}"]
+      result = f"Bought {BNB_amount} BNB of {symbol}"
       return result
    except ValueError as e:
-      print(e)
       if e.args[0].get("message") in "intrinsic gas too low":
-         # result = "Failed", f"ERROR: {e.args[0].get('message')}"
-         return "Failed: Try again later"
-         print(e.args[0].get("message"))
+         return "Failed: Try again later ========"
       else:
-         # result = "Failed", f"ERROR: {e.args[0].get('message')} : {e.args[0].get('code')}"
-         return "Failed: Try again later"
-      return result
+         return "Failed: Your input money is too much than the amount in your wallet!!!"
