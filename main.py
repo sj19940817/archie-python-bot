@@ -391,7 +391,7 @@ async def private_key_input(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             else:
                 user_data["private_key_attempts"] += 1
 
-            if user_data["private_key_attempts"] >= 3:
+            if user_data["private_key_attempts"] >= 5:
                 # Limiting the number of attempts to 3
                 await update.message.reply_text("You've exceeded the maximum number of attempts. Please try again later.")
                 return ConversationHandler.END  # End the conversation
