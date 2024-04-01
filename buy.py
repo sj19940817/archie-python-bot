@@ -15,7 +15,7 @@ def buyTokens(params):
 
    derived_wallet_address = web3.eth.account.from_key(private_key).address
    if derived_wallet_address != wallet_address:
-      return "Private key does not match provided wallet address!"
+      return "Private key is incorrect! Please try again later."
    pancakeSwap_txn = contract_pancake.functions.swapExactETHForTokens(
       0,
       [WBNB_Address, token_to_buy_address],
