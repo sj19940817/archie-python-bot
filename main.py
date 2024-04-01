@@ -224,25 +224,26 @@ async def sell_add_comments(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     )
     return SELL_TYPING_REPLY
 
-def is_valid_token_address(token_address: str)-> bool:
-    """function to validate the TokenToBuyAddress"""
-    if len(token_address) != 42 or not token_address.startswith("0x"):
-        return False
-    
-    """Check if the address consists of valid hexadecimal characters"""
+def is_valid_token_address(token_address: str) -> bool:
+    """Validate the token address."""
+    return len(token_address) == 42 and token_address.startswith("0x") and all(c in "0123456789abcdefABCDEF" for c in token_address[2:])
+
+def is_valid_wallet_address(wallet_address: str) -> bool:
+    """Validate the wallet address."""
+    return bool(re.match(r"^(0x)?[A-Fa-f0-9]{40}$", wallet_address))
+
+def is_valid_private_key(private_key: str) -> bool:
+    """Validate the private key."""
+    return bool(re.match(r"^[A-Fa-f0-9]{64}$", private_key))
+
+def is_valid_amount(text: str) -> bool:
+    """Validate the amount."""
     try:
-        int(token_address, 16)
+        float(text)
         return True
     except ValueError:
         return False
 
-def is_valid_wallet_address(wallet_address) -> bool:
-    """Function to validate the wallet address"""
-    return bool(re.match(r"^(0x)?[A-Fa-f0-9]{40}$", wallet_address))
-
-def is_valid_private_key(private_key):
-    """Function to validate the private key"""
-    return bool(re.match(r"^[A-Fa-f0-9]{64}$", private_key))
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Cancel the conversation and clear user data."""
@@ -253,17 +254,6 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         reply_markup=ReplyKeyboardRemove(),        
     )
     return ConversationHandler.END
-
-def is_valid_amount(text):
-    try:
-        int_value = int(text)
-        return True
-    except ValueError:
-        try:
-            float_value = float(text)
-            return True
-        except ValueError:
-            return False
 
 async def buy_received_information(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Update the buy_received_information function to include private key validation"""    
