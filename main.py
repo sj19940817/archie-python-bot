@@ -50,11 +50,8 @@ sell_reply_keyboard = [
 buy_markup = ReplyKeyboardMarkup(buy_reply_keyboard, one_time_keyboard=True)
 sell_markup = ReplyKeyboardMarkup(sell_reply_keyboard, one_time_keyboard=True)
 
-reply_chains = [
-    "BSC",
-    "Avax",
-    "Solana"
-]
+reply_chains = ["BSC", "Avax", "Solana"]
+
 async def buy_tokens(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     # Assuming you're using Telegram's Python API
     user_data = context.user_data
@@ -526,80 +523,39 @@ async def quit_order(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return ConversationHandler.END
 
 def main() -> None:
-    """Run the bot."""
-
-    """Create the Application and pass it your bot's token."""
     application = Application.builder().token(Bot_Token).build()
 
-    """Add conversation handler with the states CHOOSING, TYPING_CHOICE and TYPING_REPLY"""
     conv_handler = ConversationHandler(
-        # entry_points=[CommandHandler("start", sell_tokens), CommandHandler("help", help)],
         entry_points=[CommandHandler("start", start), CommandHandler("help", help)],
         states={
-            CHOOSING: [
-                MessageHandler(
-                    filters.Regex("^Buy"), buy
-                ),
-                MessageHandler(
-                    filters.Regex("^Sell"), sell
-                ),
-                MessageHandler(
-                    filters.Regex("^Chain$"), buy_select_choice
-                ),
-                MessageHandler(filters.Regex("^BSC|Avax|Solana"), select_chain),
-                MessageHandler(
-                    filters.Regex("^(TokenToBuyAddress|BNB|Private Key)$"), regular_choice
-                ),
-                MessageHandler(filters.Regex("^OK$"), OK),
-                MessageHandler(filters.Regex("^Add comments$"), add_comments),
-                MessageHandler(filters.Regex("^Exit$"), exit),
-                MessageHandler(filters.Regex("^Confirm$"), confirm),
-                MessageHandler(filters.Regex("^Yes$"), confirm_exit_yes),
-                MessageHandler(filters.Regex("^No"), confirm_exit_no)
-            ],
-            SELL_CHOOSING: [
-                MessageHandler(
-                    filters.Regex("^Chain$"), sell_select_choice
-                ),
-                MessageHandler(filters.Regex("^BSC|Avax|Solana"), select_chain),
-                MessageHandler(
-                    filters.Regex("^(TokenToSellAddress|AmountOfToken)$"), sell_regular_choice
-                ),
-                MessageHandler(filters.Regex("^OK$"), sell_ok),
-                MessageHandler(filters.Regex("^Add comments$"), sell_add_comments),
-                MessageHandler(filters.Regex("^Exit$"), sell_exit),
-                MessageHandler(filters.Regex("^Confirm$"), sell_confirm),
-                MessageHandler(filters.Regex("^Yes$"), confirm_exit_yes),
-                MessageHandler(filters.Regex("^No"), sell_confirm_exit_no)
-            ],
-            TYPING_CHOICE: [
-                MessageHandler(
-                    filters.TEXT & ~(filters.COMMAND | filters.Regex("^OK$")), wallet_address_input
-                ),
-            ],
-            TYPING_PRIVATE_KEY: [
-                MessageHandler(
-                    filters.TEXT & ~(filters.COMMAND | filters.Regex("^OK$")), private_key_input
-                    ),
-            ],
-            TYPING_REPLY: [
-                MessageHandler(
-                    filters.TEXT & ~(filters.COMMAND | filters.Regex("^OK$")),
-                    buy_received_information,
-                )
-            ],
-            SELL_TYPING_REPLY: [
-                MessageHandler(
-                    filters.TEXT & ~(filters.COMMAND | filters.Regex("^OK$")),
-                    sell_received_information,
-                )
-            ],
+            CHOOSING: [MessageHandler(filters.Regex("^Buy"), buy),
+                       MessageHandler(filters.Regex("^Sell"), sell),
+                       MessageHandler(filters.Regex("^Chain$"), buy_select_choice),
+                       MessageHandler(filters.Regex("^BSC|Avax|Solana"), select_chain),
+                       MessageHandler(filters.Regex("^(TokenToBuyAddress|BNB|Private Key)$"), regular_choice),
+                       MessageHandler(filters.Regex("^OK$"), OK),
+                       MessageHandler(filters.Regex("^Add comments$"), add_comments),
+                       MessageHandler(filters.Regex("^Exit$"), exit),
+                       MessageHandler(filters.Regex("^Confirm$"), confirm),
+                       MessageHandler(filters.Regex("^Yes$"), confirm_exit_yes),
+                       MessageHandler(filters.Regex("^No"), confirm_exit_no)],
+            SELL_CHOOSING: [MessageHandler(filters.Regex("^Chain$"), sell_select_choice),
+                            MessageHandler(filters.Regex("^BSC|Avax|Solana"), select_chain),
+                            MessageHandler(filters.Regex("^(TokenToSellAddress|AmountOfToken)$"), sell_regular_choice),
+                            MessageHandler(filters.Regex("^OK$"), sell_ok),
+                            MessageHandler(filters.Regex("^Add comments$"), sell_add_comments),
+                            MessageHandler(filters.Regex("^Exit$"), sell_exit),
+                            MessageHandler(filters.Regex("^Confirm$"), sell_confirm),
+                            MessageHandler(filters.Regex("^Yes$"), confirm_exit_yes),
+                            MessageHandler(filters.Regex("^No"), sell_confirm_exit_no)],
+            TYPING_CHOICE: [MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^OK$")), wallet_address_input)],
+            TYPING_PRIVATE_KEY: [MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^OK$")), private_key_input)],
+            TYPING_REPLY: [MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^OK$")), buy_received_information)],
+            SELL_TYPING_REPLY: [MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^OK$")), sell_received_information)],
         },
-        fallbacks=[
-            MessageHandler(filters.Regex("^Cancel$"), cancel),
-            CommandHandler("quit", quit_order),
-            CommandHandler("help", help)
-            ],
+        fallbacks=[MessageHandler(filters.Regex("^Cancel$"), cancel),
+                   CommandHandler("quit", quit_order),
+                   CommandHandler("help", help)],
     )
 
     application.add_handler(conv_handler)

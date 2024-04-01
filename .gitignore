@@ -1,3 +1,5 @@
 integrate_BSC.py
 data/*
 _pycache_
+main1.py
+.gitignore
