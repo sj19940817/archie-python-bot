@@ -52,23 +52,35 @@ sell_markup = ReplyKeyboardMarkup(sell_reply_keyboard, one_time_keyboard=True)
 
 reply_chains = ["BSC", "Avax", "Solana"]
 
+async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Cancel the conversation and clear user data."""
+    user_data = context.user_data
+    user_data.clear()
+    await update.message.reply_text(
+        "Transaction canceled. You can start a new transaction by typing /start.",
+        reply_markup=ReplyKeyboardRemove(),        
+    )
+    return ConversationHandler.END
+
 async def buy_tokens(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     # Assuming you're using Telegram's Python API
     user_data = context.user_data
-    result =  initialize_buy(user_data)  # Use 'await' for asynchronous function call
+    result =  initialize_buy(user_data)  
+    user_data.clear()
     await update.message.reply_text(
-        f"{result}"
+        f"{result} \n You can start the transaction by typing /start command"      
     )
-    return ConversationHandler.END
+    # return ConversationHandler.END
 
 async def sell_tokens(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     # implement logic to buy tokens on PancakeSwap
     user_data = context.user_data
     result = initialize_sell(user_data)
+    user_data.clear()
     await update.message.reply_text(
-        f"{result}"
+        f"{result} \n You can restart the transaction by typing /start command"
     )    
-    return ConversationHandler.END
+    # return ConversationHandler.END
 
 
 def facts_to_str(user_data: Dict[str, str]) -> str:
@@ -398,11 +410,11 @@ async def private_key_input(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     
     for key in user_data.keys():
         if key == "TokenToBuyAddress":        
-            await buy_tokens(update, context)
-            return False
+            await buy_tokens(update, context) 
+            return ConversationHandler.END
         if key == "TokenToSellAddress":
             await sell_tokens(update, context)
-            return False
+            return ConversationHandler.END
         # else:
         #     return False
 
