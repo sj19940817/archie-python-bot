@@ -13,7 +13,6 @@ from telegram.ext import (
 )
 
 from config import Bot_Token
-import requests
 from  swap_tokens import initialize_buy, initialize_sell
 
 """Enable logging"""

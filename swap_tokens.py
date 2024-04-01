@@ -1,7 +1,5 @@
 from os import system
 
-from bs4 import BeautifulSoup as bsp
-
 from web3 import Web3 
 
 from decimal_data import getTokenDecimal
