@@ -10,7 +10,7 @@ def sellTokens(kwargs):
     WBNB_Address = kwargs.get('WBNB_Address')
     contractSellToken = kwargs.get('contract_sell_token')
     TradingTokenDecimal = kwargs.get('trading_token_decimal')
-    tokensToSell = kwargs.get("sell_token_amount")
+    tokensToSell = kwargs.get("token_to_amount")
     private_key = kwargs.get("private_key")
 
     tokenToSell = web3.to_wei(tokensToSell, TradingTokenDecimal)
@@ -33,11 +33,11 @@ def sellTokens(kwargs):
         approve, private_key=private_key)
     
     tx_token = web3.eth.send_raw_transaction(signed_txn.rawTransaction)
-    print(f"Approved: {web3.to_hex(tx_token)}")
+    # print(f"Approved: {web3.to_hex(tx_token)}")
     
     time.sleep(7)
 
-    print(f"Swapping {web3.from_wei(tokenToSell, TradingTokenDecimal)} {symbol} for BNB")
+    # print(f"Swapping {web3.from_wei(tokenToSell, TradingTokenDecimal)} {symbol} for BNB")
 
     pancakeSwap_txn = contractPancake.functions.swapExactTokensForETH(
         tokenToSell, 0,
@@ -60,8 +60,6 @@ def sellTokens(kwargs):
         return result
     except ValueError as e:
         if e.args[0].get("message") in "intrinsic gas too low":
-            # result = "Failed", f"ERROR: {e.args[0].get('message')}"
             return "Failed: Try again later"
         else:
-            # result = "Failed", f"ERROR: {e.args[0].get('message')} : {e.args[0].get('code')}"
             return "Failed: Try again later"

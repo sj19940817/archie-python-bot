@@ -52,16 +52,6 @@ sell_markup = ReplyKeyboardMarkup(sell_reply_keyboard, one_time_keyboard=True)
 
 reply_chains = ["BSC", "Avax", "Solana"]
 
-async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Cancel the conversation and clear user data."""
-    user_data = context.user_data
-    user_data.clear()
-    await update.message.reply_text(
-        "Transaction canceled. You can start a new transaction by typing /start.",
-        reply_markup=ReplyKeyboardRemove(),        
-    )
-    return ConversationHandler.END
-
 async def buy_tokens(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     # Assuming you're using Telegram's Python API
     user_data = context.user_data
@@ -70,7 +60,6 @@ async def buy_tokens(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(
         f"{result} \n You can start the transaction by typing /start command"      
     )
-    # return ConversationHandler.END
 
 async def sell_tokens(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     # implement logic to buy tokens on PancakeSwap
@@ -80,8 +69,6 @@ async def sell_tokens(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
     await update.message.reply_text(
         f"{result} \n You can restart the transaction by typing /start command"
     )    
-    # return ConversationHandler.END
-
 
 def facts_to_str(user_data: Dict[str, str]) -> str:
     """Helper function for formatting the gathered user info."""
@@ -182,10 +169,6 @@ async def select_chain(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     context.user_data[category] = text
 
     return CHOOSING
-
-# async def update_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-#     new_markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
-#     await update.message.reply_text("Buttons updated.", reply_markup=new_markup)
 
 async def regular_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Display the data that the user input"""

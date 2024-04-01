@@ -20,7 +20,6 @@ def initialize_buy(user_data):
     BNB_amount = user_data.get("BNB")
     token_to_buy_address = user_data.get("TokenToBuyAddress")
     WBNB_Address = web3.to_checksum_address(config.WBNB_ADDRESS)
-    # token_to_buy_address = web3.toChecksumAddress(token_to_buy_address)
     wallet_address = user_data.get("Wallet Address")
     private_key = user_data.get("Private Key")
 
@@ -74,11 +73,9 @@ def initialize_sell(user_data):
     BNB_amount = user_data.get("BNB")
     token_to_buy_address = web3.to_checksum_address(user_data.get("TokenToSellAddress"))
     WBNB_Address = web3.to_checksum_address(config.WBNB_ADDRESS)
-    # token_to_buy_address = web3.toChecksumAddress(token_to_buy_address)
     wallet_address = user_data.get("Wallet Address")
     private_key = user_data.get("Private Key")
-    sell_token_amount = user_data.get("AmountOfToken")
-    # sell_tokne_amount = web3.to_wei(sell_token_amount, TradingTokenDecimal)
+    token_to_amount = user_data.get("AmountOfToken")
 
     if chain == "BSC":
         # Getting ABI
@@ -115,10 +112,9 @@ def initialize_sell(user_data):
             "trading_token_decimal": TradingTokenDecimal,
             "BNB_amount": BNB_amount,
             "private_key": private_key,
-            "sell_token_amount": sell_token_amount
+            "token_to_amount": token_to_amount
         } 
         
         return sellTokens(params)
-        # return BNB_balance, symbol, NoOfTokens, params`
     else:
         return "You selected chain is not supported yet"
