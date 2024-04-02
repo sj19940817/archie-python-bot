@@ -1,4 +1,3 @@
-import config as config
 import time
 
 def buyTokens(params):

@@ -401,8 +401,6 @@ async def private_key_input(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         # else:
         #     return False
 
-    # Continue with the transaction process or other actions
-
     return CHOOSING  # Move to the next step in the conversation
 
 async def OK(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int: 

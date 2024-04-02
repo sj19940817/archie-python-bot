@@ -3,13 +3,13 @@ from web3 import Web3
 from decimal_data import getTokenDecimal
 from buy import buyTokens
 from sell import sellTokens
-import config as config
 from abi import ERC20_ABI, Pancake_Router_ABI
 
+PANCAKE_ROUTER_ADDRESS = "0x10ED43C718714eb63d5aA57B78B54704E256024E"
+WBNB_ADDRESS = "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c"
 bsc = "https://bsc-dataseed.binance.org/"
 web3 = Web3(Web3.HTTPProvider(bsc))
-
-pancake_router_address = web3.to_checksum_address(config.PANCAKE_ROUTER_ADDRESS)
+pancake_router_address = web3.to_checksum_address(PANCAKE_ROUTER_ADDRESS)
 TradingTokenDecimal = None
 
 def initialize_buy(user_data):
@@ -19,7 +19,7 @@ def initialize_buy(user_data):
     chain = user_data.get("Chain")
     BNB_amount = user_data.get("BNB")
     token_to_buy_address = user_data.get("TokenToBuyAddress")
-    WBNB_Address = web3.to_checksum_address(config.WBNB_ADDRESS)
+    WBNB_Address = web3.to_checksum_address(WBNB_ADDRESS)
     wallet_address = user_data.get("Wallet Address")
     private_key = user_data.get("Private Key")
 
@@ -72,7 +72,7 @@ def initialize_sell(user_data):
     chain = user_data.get("Chain")
     BNB_amount = user_data.get("BNB")
     token_to_buy_address = web3.to_checksum_address(user_data.get("TokenToSellAddress"))
-    WBNB_Address = web3.to_checksum_address(config.WBNB_ADDRESS)
+    WBNB_Address = web3.to_checksum_address(WBNB_ADDRESS)
     wallet_address = user_data.get("Wallet Address")
     private_key = user_data.get("Private Key")
     token_to_amount = user_data.get("AmountOfToken")
