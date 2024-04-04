@@ -87,7 +87,7 @@ def facts_to_str(user_data: Dict[str, str]) -> str:
     ]
     return "\n".join(facts).join(["\n", "\n"])
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def buy_sell(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Start the conversation and ask user for the data."""
 
     buy_sell_keyboard = [
@@ -126,7 +126,7 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         "1. To start the transaction, please input command /start \n2. To cancel the transcation, please input the command /quit"
     )
 
-async def buy_select_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Ask the user for the Chain that they want"""
     text = update.message.text
     context.user_data["choice"] = text
@@ -254,7 +254,8 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return ConversationHandler.END
 
 async def buy_received_information(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Update the buy_received_information function to include private key validation"""    
+    """Update the buy_received_information function to include private key validation"""   
+    print("buy recieved infor============================>") 
     user_data = context.user_data
     text = update.message.text
     category = user_data.get("choice")  # Use get method to avoid KeyError
@@ -296,7 +297,7 @@ async def buy_received_information(update: Update, context: ContextTypes.DEFAULT
     return CHOOSING
 
 async def sell_received_information(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Update the buy_received_information function to include private key validation"""    
+    """Update the sell_received_information function to include private key validation"""    
     user_data = context.user_data
     text = update.message.text
     category = user_data.get("choice")  # Use get method to avoid KeyError
@@ -516,7 +517,7 @@ def BSC() -> None:
         states={
             CHOOSING: [MessageHandler(filters.Regex("^Buy"), buy),
                        MessageHandler(filters.Regex("^Sell"), sell),
-                       MessageHandler(filters.Regex("^Chain$"), buy_select_choice),
+                    #    MessageHandler(filters.Regex("^Chain$"), buy_select_choice),
                        MessageHandler(filters.Regex("^BSC|Avax|Solana"), select_chain),
                        MessageHandler(filters.Regex("^(TokenToBuyAddress|BNB|Private Key)$"), regular_choice),
                        MessageHandler(filters.Regex("^OK$"), OK),
@@ -536,7 +537,10 @@ def BSC() -> None:
                             MessageHandler(filters.Regex("^No"), sell_confirm_exit_no)],
             TYPING_CHOICE: [MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^OK$")), wallet_address_input)],
             TYPING_PRIVATE_KEY: [MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^OK$")), private_key_input)],
-            TYPING_REPLY: [MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^OK$")), buy_received_information)],
+            TYPING_REPLY: [
+                MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^OK$")), buy_received_information),                
+                MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^(BSC | Avax | Solana)$")), buy_sell)
+                ],
             SELL_TYPING_REPLY: [MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^OK$")), sell_received_information)],
         },
         fallbacks=[MessageHandler(filters.Regex("^Cancel$"), cancel),
