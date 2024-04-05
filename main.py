@@ -28,21 +28,13 @@ logger = logging.getLogger(__name__)
 CHOOSING, TYPING_REPLY, TYPING_CHOICE, TYPING_PRIVATE_KEY, SELL_CHOOSING, SELL_TYPING_REPLY = range(6)
 
 buy_reply_keyboard = [
-    [{"text": "Chain", "request_contact": False},
-     {"text": "TokenToBuyAddress", "request_contact": False}],
-    [{"text": "BNB", "request_contact": False },    
-     {"text": "Add comments", "request": True}],
-    [{"text": "OK", "request_contact": False},
-     {"text": "Exit", "request": False}],
+    [{"text": "BNB", "request_contact": False }, {"text": "TokenToBuyAddress", "request_contact": False}, {"text": "Add comments", "request": True}],
+    [{"text": "OK", "request_contact": False}, {"text": "Exit", "request": False}],
 ]
 
 sell_reply_keyboard = [
-    [{"text": "Chain", "request_contact": False},
-     {"text": "TokenToSellAddress", "request_contact": False}],
-    [{"text": "AmountOfToken", "request_contact": False }, 
-     {"text": "Add comments", "request": True}],
-    [{"text": "OK", "request_contact": False},
-     {"text": "Exit", "request": False}],
+    [{"text": "TokenToSellAddress", "request_contact": False}, {"text": "AmountOfToken", "request_contact": False }, {"text": "Add comments", "request": True}],
+    [{"text": "OK", "request_contact": False}, {"text": "Exit", "request": False}],
 ]
 
 buy_markup = ReplyKeyboardMarkup(buy_reply_keyboard, one_time_keyboard=True)
@@ -124,7 +116,7 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 async def buy_select_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Ask the user for the Chain that they want"""
     text = update.message.text
-    context.user_data["choice"] = text
+    context.user_data["choice"] = "Chain"
 
     # Types of  the chain
     reply_chains = [
@@ -143,7 +135,7 @@ async def buy_select_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 async def sell_select_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Ask the user for the Chain that they want"""
     text = update.message.text
-    context.user_data["choice"] = text
+    context.user_data["choice"] = "Chain"
 
     # Definition of  the chains
     reply_chains = [
@@ -509,9 +501,8 @@ def main() -> None:
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start), CommandHandler("help", help)],
         states={
-            CHOOSING: [MessageHandler(filters.Regex("^Buy"), buy),
-                       MessageHandler(filters.Regex("^Sell"), sell),
-                       MessageHandler(filters.Regex("^Chain$"), buy_select_choice),
+            CHOOSING: [MessageHandler(filters.Regex("^Buy"), buy_select_choice),
+                       MessageHandler(filters.Regex("^Sell"), sell_select_choice),
                        MessageHandler(filters.Regex("^BSC|Avax|Solana"), select_chain),
                        MessageHandler(filters.Regex("^(TokenToBuyAddress|BNB|Private Key)$"), regular_choice),
                        MessageHandler(filters.Regex("^OK$"), OK),

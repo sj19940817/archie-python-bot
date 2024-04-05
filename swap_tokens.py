@@ -117,4 +117,4 @@ def initialize_sell(user_data):
         
         return sellTokens(params)
     else:
-        return "You selected chain is not supported yet"
+        return "The chain you selected is not supported yet"
