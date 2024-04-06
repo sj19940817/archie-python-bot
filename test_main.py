@@ -27,15 +27,31 @@ logger = logging.getLogger(__name__)
 
 CHOOSING, TYPING_REPLY, TYPING_CHOICE, TYPING_PRIVATE_KEY, SELL_CHOOSING, SELL_TYPING_REPLY = range(6)
 
-buy_sell_home = [
+buy_sell_home_reply_keyboard = [
     ["Copy Your Wallet Address"],
     ["About Buy/Sell"],
     ["Back", "Cancel"]
 ]
 
+buy_sell_reply_keyboard = [
+    ["Buy", "Sell"],
+    ["My Wallet"],
+    ["Buy Settings", "Help"],
+    ["Back", "Cancel"]
+]
+
 buy_reply_keyboard = [
-    [{"text": "BNB", "request_contact": False }, {"text": "TokenToBuyAddress", "request_contact": False}, {"text": "Add comments", "request": True}],
-    [{"text": "OK", "request_contact": False}, {"text": "Exit", "request": False}],
+    ["BUSD", "CAKE"],
+    ["USDT", "USDC"],
+    ["See More Recommendations"],
+    ["Back", "Cancel"]
+]
+
+buy_detial_reply_keyboard = [
+    ["See Token Details"],
+    ["QUICK BUY"],
+    ["Custom","Refresh"],
+    ["Cancel"]
 ]
 
 sell_reply_keyboard = [
@@ -43,8 +59,11 @@ sell_reply_keyboard = [
     [{"text": "OK", "request_contact": False}, {"text": "Exit", "request": False}],
 ]
 
-buy_sell_home_markup = ReplyKeyboardMarkup(buy_sell_home, one_time_keyboard=True)
+buy_sell_home_markup = ReplyKeyboardMarkup(buy_sell_home_reply_keyboard, one_time_keyboard=True)
+buy_sell_markup = ReplyKeyboardMarkup(buy_sell_reply_keyboard, one_time_keyboard=True)
 buy_markup = ReplyKeyboardMarkup(buy_reply_keyboard, one_time_keyboard=True)
+buy_detail_markup = ReplyKeyboardMarkup(buy_detial_reply_keyboard, one_time_keyboard=True)
+
 sell_markup = ReplyKeyboardMarkup(sell_reply_keyboard, one_time_keyboard=True)
 
 reply_chains = ["BSC", "Avax", "Solana"]
@@ -81,39 +100,47 @@ def facts_to_str(user_data: Dict[str, str]) -> str:
     ]
     return "\n".join(facts).join(["\n", "\n"])
 
-# async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-#     """Start the conversation and ask user for the data."""
-
-#     buy_sell_keyboard = [
-#        ["Buy",
-#         "Sell"]
-#     ]
-#     buy_sell_markup = ReplyKeyboardMarkup(buy_sell_keyboard, one_time_keyboard=True)
-#     await update.message.reply_text(
-#         "Hello! I am  ** ArchieBot **. Please input the data to buy and sell tokens.",
-#         reply_markup=buy_sell_markup,
-#     )
-
-#     return CHOOSING
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Start the conversation and ask user for the data."""
-    print("here is start=====>", update, context)
-
+    print("this is wallet=====>", context.user_data)
+    wallet_address = context.user_data
     message = (
         "Welcome to ARCHIE Buy and Sell\nYou'll need to send money to your ARCHIE account to use this feature \nPress *Copy Your Wallet Address* below to send funds to your wallet"
     )
     await update.message.reply_text(message, reply_markup=buy_sell_home_markup,
     )
-
     return CHOOSING
 
-async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """buy token with BNB"""
-    await update.message.reply_text(
-        "Input the token address you want to buy and the amount of BNB.",
-        reply_markup=buy_markup,
+async def buy_sell(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """When the user click the About buy and sell."""
+    print("this is buy sell=====>", context.user_data)
+    
+    message = (
+        "Welcome to ARCHIE Buy and Sell \n What would you like to do?"
     )
+    await update.message.reply_text(message, reply_markup=buy_sell_markup,
+    )
+    return CHOOSING
+    
+async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Buy design"""
+    print("buy====>", context.user_data)
+    
+    message = ("To purchase, please paste the contract address in the chat, or press one of our recommended shortcuts")
+    await update.message.reply_text(message, reply_markup=buy_markup)
+    
+    return CHOOSING 
+    
+async def buy_tokens(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Buy design"""
+    
+    buy_token = update.message.text
+    context.user_data["TokenToBuyAddress"] = buy_token
+
+    print("buy tokens====>", context.user_data)
+    token_buy = update.message.text
+    message = ("Loading \n Just a minute!")
+    await update.message.reply_text(message, reply_markup=buy_detail_markup)
     
     return CHOOSING 
 
@@ -359,7 +386,7 @@ async def sell_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bo
 async def wallet_address_input(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Ask the user to input the wallet address."""
     user_data = context.user_data
-    print(user_data)
+    print("here is wallet address ==========>",user_data)
     wallet_address = update.message.text
     selected_chain = user_data.get("Chain")
 
@@ -369,11 +396,7 @@ async def wallet_address_input(update: Update, context: ContextTypes.DEFAULT_TYP
             return TYPING_CHOICE
     user_data["Wallet Address"] = wallet_address
 
-    await update.message.reply_text(
-        "Please input your wallet private key!",
-    )
-
-    return CHOOSING
+    return await start(update, context)
 
 async def private_key_input(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Ask the user to input the private key."""
@@ -523,17 +546,18 @@ def main() -> None:
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start), CommandHandler("help", help)],
         states={
-            CHOOSING: [MessageHandler(filters.Regex("^Buy"), buy_select_choice),
-                       MessageHandler(filters.Regex("^Sell"), sell_select_choice),
-                    #    MessageHandler(filters.Regex("^BSC|Avax|Solana"), select_chain),
-                       MessageHandler(filters.Regex("^(TokenToBuyAddress|BNB|Private Key)$"), regular_choice),
-                       MessageHandler(filters.Regex("^OK$"), OK),
-                       MessageHandler(filters.Regex("^Add comments$"), add_comments),
-                       MessageHandler(filters.Regex("^Exit$"), exit),
-                       MessageHandler(filters.Regex("^Confirm$"), confirm),
-                       MessageHandler(filters.Regex("^Yes$"), confirm_exit_yes),
-                       MessageHandler(filters.Regex("^No"), confirm_exit_no),
-                       MessageHandler(filters.Regex("^Copy Your Wallet Address"), copy_wallet_address)],
+            CHOOSING: [
+                       MessageHandler(filters.Regex("^Copy Your Wallet Address"), copy_wallet_address),
+                       MessageHandler(filters.Regex("^About Buy/Sell"), buy_sell),
+                       MessageHandler(filters.Regex("^Buy"), buy),
+                       MessageHandler(filters.Regex("^(BUSD|USDT|USDC|CAKE)$"), buy_tokens),
+                       MessageHandler(filters.Regex("^Sell"), buy_sell),
+                       MessageHandler(filters.Regex("^My Wallet"), buy_sell),
+                       MessageHandler(filters.Regex("^Buy Settings"), buy_sell),
+                       MessageHandler(filters.Regex("^Help"), buy_sell),
+                       MessageHandler(filters.Regex("^Back"), buy_sell),
+                       MessageHandler(filters.Regex("^Cancel"), buy_sell)
+                       ],
             SELL_CHOOSING: [MessageHandler(filters.Regex("^Chain$"), sell_select_choice),
                             # MessageHandler(filters.Regex("^BSC|Avax|Solana"), select_chain),
                             MessageHandler(filters.Regex("^(TokenToSellAddress|AmountOfToken)$"), sell_regular_choice),
@@ -545,7 +569,7 @@ def main() -> None:
                             MessageHandler(filters.Regex("^No"), sell_confirm_exit_no)],
             TYPING_CHOICE: [MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^OK$")), wallet_address_input)],
             TYPING_PRIVATE_KEY: [MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^OK$")), private_key_input)],
-            TYPING_REPLY: [MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^OK$")), wallet_address_input)],
+            # TYPING_REPLY: [MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^OK$")), wallet_address_input)],
             TYPING_REPLY: [MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^OK$")), buy_received_information)],
             SELL_TYPING_REPLY: [MessageHandler(filters.TEXT & ~(filters.COMMAND | filters.Regex("^OK$")), sell_received_information)],
         },
