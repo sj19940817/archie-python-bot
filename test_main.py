@@ -113,14 +113,20 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def buy_sell(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """When the user click the About buy and sell."""
-    print("this is buy sell=====>", context.user_data)
     
+    print("this is buy sell=====>", context.user_data)
     message = (
         "Welcome to ARCHIE Buy and Sell \n What would you like to do?"
     )
     await update.message.reply_text(message, reply_markup=buy_sell_markup,
     )
     return CHOOSING
+
+async def copy_wallet_address(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
+    """confirm user's transaction"""
+    await update.message.reply_text("Please input your wallet address!")
+    
+    return TYPING_CHOICE
     
 async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Buy design"""
@@ -136,13 +142,53 @@ async def buy_tokens(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     
     buy_token = update.message.text
     context.user_data["TokenToBuyAddress"] = buy_token
-
+    
     print("buy tokens====>", context.user_data)
-    token_buy = update.message.text
-    message = ("Loading \n Just a minute!")
+    
+    """Call the function to get the details about the buy_token from backend"""
+    token_price = "$11.11USD"
+    market_cap =  "$1.42B"
+    price_change = "+1.53%"
+    wallet_balance = "10 BNB"
+    quick_buy = "0.01BNB"
+
+
+    message = (f"You'd like to buy {buy_token}!\nPrice per token: {token_price} \nMarket Cap: {market_cap} \n24h: {price_change} \n Your ARCHIE Wallet Balance: {wallet_balance} \nYour Quick Buy is set at: {quick_buy} \nTo buy, press one of the buttons below")
     await update.message.reply_text(message, reply_markup=buy_detail_markup)
     
     return CHOOSING 
+
+async def quick_buy(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """call backend to buy tokens in a simple way"""
+
+    # loading = "Loading... Just a minute"
+    # await update.message.reply_text(loading)
+
+    """call the backend to ask transaction and get the result data"""
+    total_token_price = "$28.84 BUSD"
+    buy_token_amount = "0.85"
+    buy_token = context.user_data["TokenToBuyAddress"]
+    main_coin = "BNB"
+    main_coin_amount = "0.02"
+    buy_token_per_price = "$14.42 USD"
+    market_cap =  "$1.42B"
+    chain = "BSC"
+    total_token_wallet = "$2420 USD"                                 
+
+    message = f"Trade Successful! \nYou purchased {total_token_price} of {buy_token} \nTrade Details: \n+{buy_token_amount} {buy_token} \n-"     
+    await update.message.reply()
+
+
+    return CHOOSING
+
+async def result(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """display the successful or unsuccessful page"""
+    await update.message.reply_text(
+        "successful and unsuccessful page",
+        reply_markup=sell_markup,
+    )
+    
+    return SELL_CHOOSING 
 
 async def sell(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """sell token function"""
@@ -372,11 +418,6 @@ async def confirm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
     
     return TYPING_CHOICE
 
-async def copy_wallet_address(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
-    """confirm user's transaction"""
-    await update.message.reply_text("Please input your wallet address!")
-    
-    return TYPING_CHOICE
 
 async def sell_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
     """confirm user's transaction"""
